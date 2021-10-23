@@ -15,6 +15,31 @@ classdef Data
             obj.Num_Features = size(obj.Xdata,2);
             obj.TestPercentage = TestPercentage;
         end
+
+        function [Xtrain,Ytrain,Xtest,Ytest] = SplitData(obj)
+            % Shuffles the data and splits data in train and test
+            r = randperm(obj.Num_Experiences);
+            ntest = round(obj.TestPercentage/100*obj.Num_Experiences);
+            ntrain = obj.Num_Experiences-ntest;
+            Xtrain = obj.Xdata(r(1:ntrain),:);
+            Xtest = obj.Xdata(r((ntrain+1):end),:);
+            Ytrain = obj.Ydata(r(1:ntrain),:);
+            Ytest = obj.Ydata(r((ntrain+1):end),:);
+        end
+
+        function Xfull = ComputeFullX(obj,X,d)
+            % Builds a X matrix with more features using lineal combinations
+            X1 = X(:,1); 
+            X2 = X(:,2);
+            contador = 1;
+            for g = 0:d
+                for a = 0:g
+                       Xfull(:,contador) = X2.^(a).*X1.^(g-a);
+                       contador = contador+1;
+                end
+            end
+        end
+
         function PlotData(obj)
             % Plots all the data labeled by colour in one figure 
             gscatter(obj.Xdata(:,1),obj.Xdata(:,2),obj.Ydata,'bgr','xo*')
@@ -22,6 +47,7 @@ classdef Data
             ylabel("X4");
         end
     end
+
     methods (Access = private)
         function [X,y] = loadData(obj,FN)
             data = load(FN);
@@ -38,27 +64,6 @@ classdef Data
                 end
             end
         end
-        function [Xtrain,Ytrain,Xtest,Ytest] = SplitData(obj)
-            % Shuffles the data and splits data in train and test
-            r = randperm(obj.Num_Experiences);
-            ntest = round(obj.TestPercentage/100*obj.Num_Experiences);
-            ntrain = obj.Num_Experiences-ntest;
-            Xtrain = obj.Xdata(r(1:ntrain),:);
-            Xtest = obj.Xdata(r((ntrain+1):end),:);
-            Ytrain = obj.Ydata(r(1:ntrain),:);
-            Ytest = obj.Ydata(r((ntrain+1):end),:);
-        end
-        function Xfull = ComputeFullX(obj,X,d)
-            % Builds a X matrix with more features using lineal combinations
-            X1 = X(:,1); 
-            X2 = X(:,2);
-            contador = 1;
-            for g = 0:d
-                for a = 0:g
-                       Xfull(:,contador) = X2.^(a).*X1.^(g-a);
-                       contador = contador+1;
-                end
-            end
-        end
+       
     end
 end

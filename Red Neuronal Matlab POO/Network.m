@@ -15,26 +15,34 @@ classdef Network
    methods (Access = public)
 
        function obj = Network(Net_Structure,Lambda)
-           obj.Num_Features = 2;
+           obj.Num_Features = 0;
            obj.Sizes = Net_Structure;
            obj.Num_layers = length(Net_Structure);
-           obj.Theta0 = obj.ComputeInitialTheta();
-           obj.ThetaOpt = obj.Theta0; %%%%%%%%% AGHHH it can't be 3D as in matlab 3D arrays must have constant sizes (x,y,z)
            %Thetamat = obj.Thetavec_to_Thetamat(obj.Theta0);
            obj.Lambda = Lambda;
            
        end
 
-       function [J,grad] = ComputeCost(obj,X,y,theta)
-           [a, J, ~] = obj.forwardprop(X,theta,y);
-            grad = obj.backwardprop(a,theta,y);
+       function [ThetaOpt,Num_Features] = Train(obj,data)
+           [Xtrain,Ytrain,Xtest,Ytest] = data.SplitData();
+           Xfull = data.ComputeFullX(Xtrain,1);
+           Yfull = Ytrain;
+           Num_Features = size(Xfull,2);
+           obj.Num_Features = size(Xfull,2);
+           obj.Theta0 = obj.ComputeInitialTheta();
+           ThetaOpt1 = obj.SolveTheta(Xfull,Yfull);
+           [J,grad] = obj.ComputeCost(Xfull,Yfull,ThetaOpt1);
+           ThetaOpt = ThetaOpt1;
        end
 
-       function ThetaOpt = Train(data)
-           
-
-
-           ThetaOpt = 1;
+       function h = Xpropagation(obj,X,theta)
+            thetamat = obj.Thetavec_to_Thetamat(theta);
+            h = hypothesisFunction(X,thetamat.(thetamat.name{1}));
+            g = sigmoid(h);
+            for i = 2:obj.Num_layers
+                h = hypothesisFunction(g,thetamat.(thetamat.name{i}));
+                g = sigmoid(h);
+            end
        end
    end
    methods (Access = private)
@@ -45,6 +53,19 @@ classdef Network
                 count = count + obj.Sizes(i-1)*obj.Sizes(i);
            end
            Theta0 = zeros(1,count);
+       end
+
+       function theta = SolveTheta(obj,X,Y)
+           %options = optimoptions(@fminunc,'Algorithm','quasi-newton','StepTolerance',10^(-6),'MaxFunEvals',5000);
+           options = optimoptions(@fminunc,'Display','iter','Algorithm','quasi-newton','PlotFcn',{@optimplotfval},'StepTolerance',10^(-6),'MaxFunEvals',1000,'CheckGradients',true);
+           %options = optimoptions(@fminunc,'Display','iter','Algorithm','quasi-newton','StepTolerance',10^(-6),'MaxFunEvals',5000,'CheckGradients',true);
+           F = @(theta) obj.ComputeCost(X,Y,theta);
+           [theta,fval,exitflag,output] = fminunc(F,obj.Theta0,options);
+       end
+
+       function [J,grad] = ComputeCost(obj,X,y,theta)
+           [a, J, ~] = obj.forwardprop(X,theta,y);
+            grad = obj.backwardprop(a,theta,y);
        end
 
        function [a, J, h] = forwardprop(obj,X,theta,y)
