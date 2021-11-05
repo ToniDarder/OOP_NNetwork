@@ -1,28 +1,30 @@
 %% Plot the data and the boundary conds
 function PlotBoundary(data,NN)
-    X = data.Xdata;
+    X = data.Xfull;
     n = size(X,2);
     m = size(X,1);
     n_points = 200;
     
-    x1 = linspace(1.5*min(X(:,1)),1.5*max(X(:,1)),n_points);
+    x1 = linspace(1.5*min(X(:,2)),1.5*max(X(:,2)),n_points);
     x1 = x1';
-    x2 = min(X(:,2)) + zeros(n_points,1);
+    x2 = min(X(:,3)) + zeros(n_points,1);
     x2_aux = zeros(n_points,1);
     
-    X_test = zeros(n_points,NN.Num_Features,n_points);
-    h = zeros(n_points*NN.Sizes(end),n_points);
+    X_test = zeros(n_points,size(X,2),n_points);
+    h = zeros(n_points*NN.sizes(end),n_points);
     for i = 1:n_points 
-        x2 = x2 + (1.5*max(X(:,2)) - 1.5*min(X(:,2)))/n_points;
+        x2 = x2 + (1.5*max(X(:,3)) - 1.5*min(X(:,3)))/n_points;
         x2_aux(i) = x2(1);
-        xdata_test = [x1 , x2];
-        X_test(:,:,i) = data.ComputeFullX(xdata_test,1);
-        h(:,i) = reshape(NN.Xpropagation(X_test(:,:,i),NN.ThetaOpt),[n_points*NN.Sizes(end),1]);
+        b = ones(n_points,1);
+        xdata_test = [b, x1 , x2];
+        X_test(:,:,i) = xdata_test;
+        %X_test(:,:,i) = data.computefullX(xdata_test,1);
+        h(:,i) = reshape(NN.compute_last_H(X_test(:,:,i)),[n_points*NN.sizes(end),1]);
     end
     
     figure(1)
-    data.PlotData();
-    for j = 1:NN.Sizes(end)
+    data.plotdata();
+    for j = 1:NN.sizes(end)
         
         h_1 = h((j-1)*size(X_test,1)+1:j*size(X_test,1),:);
         
