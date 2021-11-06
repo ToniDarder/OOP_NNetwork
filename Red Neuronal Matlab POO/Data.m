@@ -4,53 +4,28 @@ classdef Data < handle
     properties (Access = public)
         Xdata
         Ydata
+        Xfull
+        Yfull       
+        Xtest
+        Ytest
         Num_Experiences
         Num_Features
         TestPercentage
-        Xtrain
-        Ytrain
-        Xtest
-        Ytest
-        Xfull
-        Yfull
+        full_d
     end
     properties (Access = private)
-
+        Xtrain
+        Ytrain
     end
     methods (Access = public)
-        function obj = Data(File_Name,TestPercentage)
+        function obj = Data(File_Name,Tper,d)
             obj.loadData(File_Name);
             obj.Num_Experiences = size(obj.Xdata,1);
             obj.Num_Features = size(obj.Xdata,2);
-            obj.TestPercentage = TestPercentage;
+            obj.TestPercentage = Tper;
+            obj.full_d = d;
             obj.splitdata()
-            obj.computefullvars(obj.Xtrain,1)
-        end
-
-        function splitdata(obj)
-            % Shuffles the data and splits data in train and test
-            r = randperm(obj.Num_Experiences);
-            ntest = round(obj.TestPercentage/100*obj.Num_Experiences);
-            ntrain = obj.Num_Experiences-ntest;
-            obj.Xtrain = obj.Xdata(r(1:ntrain),:);
-            obj.Xtest = obj.Xdata(r((ntrain+1):end),:);
-            obj.Ytrain = obj.Ydata(r(1:ntrain),:);
-            obj.Ytest = obj.Ydata(r((ntrain+1):end),:);
-        end
-
-        function computefullvars(obj,X,d)
-            % Builds a X matrix with more features using lineal combinations
-            X1 = X(:,1); 
-            X2 = X(:,2);
-            contador = 1;
-            for g = 0:d
-                for a = 0:g
-                       Xful(:,contador) = X2.^(a).*X1.^(g-a);
-                       contador = contador+1;
-                end
-            end
-            obj.Xfull = Xful;
-            obj.Yfull = obj.Ytrain;
+            obj.computefullvars(obj.Xtrain,obj.full_d)
         end
 
         function plotdata(obj)
@@ -78,6 +53,34 @@ classdef Data < handle
             end
             obj.Xdata = X;
             obj.Ydata = y;
+        end
+        
+        function splitdata(obj)
+            % Shuffles the data and splits data in train and test
+            Nexp = obj.Num_Experiences;
+            Tper = obj.TestPercentage;
+            r = randperm(Nexp);
+            ntest = round(Tper/100*Nexp);
+            ntrain = Nexp - ntest;
+            obj.Xtrain = obj.Xdata(r(1:ntrain),:);
+            obj.Xtest = obj.Xdata(r((ntrain + 1):end),:);
+            obj.Ytrain = obj.Ydata(r(1:ntrain),:);
+            obj.Ytest = obj.Ydata(r((ntrain + 1):end),:);
+        end
+
+        function computefullvars(obj,X,d)
+            % Builds a X matrix with more features using lineal combinations
+            X1 = X(:,1); 
+            X2 = X(:,2);
+            contador = 1;
+            for g = 0:d
+                for a = 0:g
+                       Xful(:,contador) = X2.^(a).*X1.^(g-a);
+                       contador = contador+1;
+                end
+            end
+            obj.Xfull = Xful;
+            obj.Yfull = obj.Ytrain;
         end
        
     end
