@@ -40,44 +40,26 @@ classdef Trainer < handle
         end
 
         function [J,grad] = computeCost(obj,x,y,sizes,theta)
-           [a, J, ~] = obj.forwardprop(x,y,theta,sizes);
+           [a, J] = obj.forwardprop(x,y,theta,sizes);
             grad = obj.backwardprop(a,y,theta,sizes);
         end
 
-        function [a, J, h] = forwardprop(obj,x,y,theta,sizes)
-            thetamat = obj.thetavec_to_thetamat(theta,sizes);
-            h = obj.hypothesisfunction(x,thetamat.(thetamat.name{1}));
-            g = sigmoid(h);
-            a.name = genvarname(repmat({'l'},1,length(sizes)+1),'l');
-            a.(a.name{1}) = x;
-            a.(a.name{2}) = g; 
-            for i = 2:length(sizes)
-                h = obj.hypothesisfunction(g,thetamat.(thetamat.name{i}));
-                g = sigmoid(h);
-                a.(a.name{i+1}) = g; 
+        function [a, J] = forwardprop(obj,x,y,theta,sizes)
+            thetamat = obj.thetavec_to_thetamat(theta,sizes);            
+            a = obj.create_activation_fcn(sizes,x,thetamat);
+            for i = 2:length(sizes)               
+                a = obj.save_activation_fcn_i(a,thetamat,i);
             end
-            for i = 1:sizes(end)
-                J_vec(i) = (1/length(y))*sum((1-y(:,i)).*(-log(1-g(:,i)))+y(:,i).*(-log(g(:,i))));
-            end
-            J = sum(J_vec) + 0.5/length(y)*obj.lambda*(theta*theta');
+            J = obj.get_fcn_value(sizes,theta,y,a.(a.name{end}));
        end
        
-       function grad = backwardprop(obj,a,y,theta,sizes)
-            grad = zeros(1,length(theta));
+       function grad = backwardprop(obj,a,y,theta,sizes)  
+            len = length(theta);
             thetamat = obj.thetavec_to_thetamat(theta,sizes);
-            delta.name = genvarname(repmat({'l'},1,length(sizes)+1),'l');
-            delta.(delta.name{end}) = a.(a.name{end}) - y;
-            aux = (1/length(y))*(delta.(delta.name{end})'*a.(a.name{end-1}))' + obj.lambda*thetamat.(thetamat.name{end});
-            newend = size(aux,1)*size(aux,2);
-            grad((end-newend+1):end) = reshape(aux,[1,size(aux,1)*size(aux,2)]);
-            newend = length(theta) - newend;
+            delta = create_delta(obj,sizes,a,y);
+            [grad,last] = obj.create_gradient(y,a,delta,thetamat,len);
             for i = length(sizes):-1:2
-                product = (thetamat.(thetamat.name{i})*delta.(delta.name{i+1})')';
-                delta.(delta.name{i}) = product*(a.(a.name{i})'*(1 - a.(a.name{i})));
-                product2 = (delta.(delta.name{i})'*a.(a.name{i-1}))';
-                aux = (1/length(y))*product2 + obj.lambda*thetamat.(thetamat.name{i-1});
-                grad(newend-size(aux,1)*size(aux,2)+1:newend) = reshape(aux,[1,size(aux,1)*size(aux,2)]);
-                newend = newend - size(aux,1)*size(aux,2);
+                [grad,delta,last] = obj.save_gradient_i(thetamat,delta,a,y,i,last);
             end
        end
        
@@ -99,13 +81,49 @@ classdef Trainer < handle
                thetamat.(thetamat.name{i}) = aux;
            end
        end  
+       
+       function a = create_activation_fcn(obj,sizes,x,th)
+            a.name = genvarname(repmat({'l'},1,length(sizes)+1),'l');
+            a.(a.name{1}) = x;
+            h = obj.hypothesisfunction(x,th.(th.name{1}));
+            g = sigmoid(h);
+            a.(a.name{2}) = g;
+       end
 
-       function a = save_a(obj,a,n,s)
-           if n == 1
-                a.(a.name{n}) = x;
-           else
-                a.(a.name{n}) = g;
-           end
+       function a = save_activation_fcn_i(obj,a,th,i)
+            previous_g = a.(a.name{i});
+            h = obj.hypothesisfunction(previous_g,th.(th.name{i}));
+            g = sigmoid(h);
+            a.(a.name{i+1}) = g;
+       end
+
+       function J = get_fcn_value(obj,sizes,theta,y,g)
+            for i = 1:sizes(end)
+                J_vec(i) = (1/length(y))*sum((1-y(:,i)).*(-log(1-g(:,i)))+y(:,i).*(-log(g(:,i))));
+            end
+            J = sum(J_vec) + 0.5/length(y)*obj.lambda*(theta*theta');
+       end
+
+       function delta = create_delta(obj,sizes,a,y)
+            delta.name = genvarname(repmat({'l'},1,length(sizes)+1),'l');
+            delta.(delta.name{end}) = a.(a.name{end}) - y;
+       end
+
+       function [grad,last] = create_gradient(obj,y,a,delta,th,len)
+           grad = zeros(1,len);
+           aux = (1/length(y))*(delta.(delta.name{end})'*a.(a.name{end-1}))' + obj.lambda*th.(th.name{end});
+           last = size(aux,1)*size(aux,2);
+           grad((end-last+1):end) = reshape(aux,[1,size(aux,1)*size(aux,2)]);
+           last = len - last;
+       end
+
+       function [grad,delta,last] = save_gradient_i(obj,th,delta,a,y,i,last)
+            product = (th.(th.name{i})*delta.(delta.name{i+1})')';
+            delta.(delta.name{i}) = product*(a.(a.name{i})'*(1 - a.(a.name{i})));
+            product2 = (delta.(delta.name{i})'*a.(a.name{i-1}))';
+            aux = (1/length(y))*product2 + obj.lambda*th.(th.name{i-1});
+            grad(last-size(aux,1)*size(aux,2)+1:last) = reshape(aux,[1,size(aux,1)*size(aux,2)]);
+            last = last - size(aux,1)*size(aux,2);
        end
 
        function h = hypothesisfunction(obj,X,theta)
