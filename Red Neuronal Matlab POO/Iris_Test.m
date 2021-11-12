@@ -1,10 +1,12 @@
 clear;
 clc;
 load('IrisTest.mat');
-NN = Network([3],0);
-data1 = Data('iris.mat',0);
-[NN.ThetaOpt,NN.Num_Features] = NN.Train(data1);
-Error = abs(NN.ThetaOpt - Mytest.ThetaOpt);
+nn = Network([3],'linear');
+data1 = Data('iris.mat',0,1);
+showgraph = false;
+linear_trainer = Trainer(0,'linear');
+[nn.thetaOpt,nn.thetaOpt_m] = linear_trainer.train(nn,data1,showgraph);
+Error = abs(nn.thetaOpt - mytest.thetaOpt);
 if Error < 5*10^(-2)
     disp('Test Passed');
 else
