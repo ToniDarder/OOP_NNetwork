@@ -7,7 +7,7 @@ Iris_Test;
 lambda = 0;
 testratio = 0;
 d = 1;
-mynet_iris = Network([3,3,3],'linear');
+mynet_iris = Network([2,2,2,3],'linear');
 data1 = Data('iris.mat',testratio,d);
 linear_trainer = Trainer(lambda,'linear');
 
