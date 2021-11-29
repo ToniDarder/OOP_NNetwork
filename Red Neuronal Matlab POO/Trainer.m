@@ -31,7 +31,7 @@ classdef Trainer < handle
 
         function theta = solveTheta(obj,x,y,sizes,dis)
            if dis == true
-                options = optimoptions(@fminunc,'Display','iter','Algorithm','quasi-newton','PlotFcn',{@optimplotfval},'StepTolerance',10^(-6),'MaxFunEvals',3000,'CheckGradients',true);
+                options = optimoptions(@fminunc,'SpecifyObjectiveGradient',true,'Display','iter','Algorithm','quasi-newton','PlotFcn',{@optimplotfval},'StepTolerance',10^(-6),'MaxFunEvals',3000,'CheckGradients',true);
            else
                 options = optimoptions(@fminunc,'Algorithm','quasi-newton','StepTolerance',10^(-6),'MaxFunEvals',1000);
            end
@@ -39,14 +39,15 @@ classdef Trainer < handle
            theta = fminunc(F,obj.theta0,options);          
         end
 
-        function [J,grad] = computeCost(obj,x,y,sizes,theta)
+        function [J,grad_auto] = computeCost(obj,x,y,sizes,theta)
            [a, J] = obj.forwardprop(x,y,theta,sizes);
             grad = obj.backwardprop(a,y,theta,sizes);
 
             theta_dl = dlarray(theta);
             J_dl = @(theta) obj.f_autodiff(x,y,theta,sizes);
             [loss,gradval] = dlfeval(J_dl,theta_dl);
-            g_err = sqrt(sum((gradval-grad).^2))/sqrt(sum((gradval).^2));
+            grad_auto = extractdata(gradval);
+            g_err = norm(grad_auto-grad)/norm(grad_auto);
             J_err = abs(loss-J);
             error = false;
             if (g_err > 1e-2)
@@ -65,8 +66,8 @@ classdef Trainer < handle
 
         function [a, J] = forwardprop(obj,x,y,theta,sizes)
             thetamat = obj.thetavec_to_thetamat(theta,sizes);            
-            a = obj.create_activation_fcn(sizes,x,thetamat);
-            for i = 2:length(sizes)               
+            a = obj.create_activation_fcn(sizes,x);
+            for i = 1:length(sizes)               
                 a = obj.save_activation_fcn_i(a,thetamat,i);
             end
             J = obj.get_fcn_value(sizes,theta,y,a.(a.name{end}));           
@@ -102,19 +103,16 @@ classdef Trainer < handle
            end
        end  
        
-       function a = create_activation_fcn(obj,sizes,x,th)
+       function a = create_activation_fcn(obj,sizes,x)
             a.name = genvarname(repmat({'l'},1,length(sizes)+1),'l');
             a.(a.name{1}) = x;
-            h = obj.hypothesisfunction(x,th.(th.name{1}));
-            g = sigmoid(h);
-            a.(a.name{2}) = g;
        end
 
        function a = save_activation_fcn_i(obj,a,th,i)
-            previous_g = a.(a.name{i});
-            h = obj.hypothesisfunction(previous_g,th.(th.name{i}));
-            g = sigmoid(h);
-            a.(a.name{i+1}) = g;
+                previous_g = a.(a.name{i});
+                h = obj.hypothesisfunction(previous_g,th.(th.name{i}));
+                g = sigmoid(h);
+                a.(a.name{i+1}) = g;
        end
 
        function J = get_fcn_value(obj,sizes,theta,y,g)
@@ -132,18 +130,26 @@ classdef Trainer < handle
        end
 
        function [grad,last] = create_gradient(obj,y,a,delta,th,len)
-           grad = zeros(1,len);           
-           aux = (1/length(y))*(delta.(delta.name{end})'*a.(a.name{end-1}))' + obj.lambda*th.(th.name{end});
+           grad = zeros(1,len);   
+           delta_e = delta.(delta.name{end});
+           a_e1 = a.(a.name{end-1});
+           th_e = th.(th.name{end});
+           aux = (1/length(y))*(delta_e'*a_e1)' + obj.lambda*th_e;
            last = size(aux,1)*size(aux,2);
            grad((end-last+1):end) = reshape(aux,[1,size(aux,1)*size(aux,2)]);
            last = len - last;
        end
 
        function [grad,delta,last] = save_gradient_i(obj,grad,th,delta,a,y,i,last)
-            product = (th.(th.name{i})*delta.(delta.name{i+1})')';
-            delta.(delta.name{i}) = product.*(a.(a.name{i}).*(1 - a.(a.name{i})));
-            product2 = (1/length(y))*(delta.(delta.name{i})'*a.(a.name{i-1}))';
-            aux = product2 + obj.lambda*th.(th.name{i-1});
+            th_i = th.(th.name{i});
+            th_1i = th.(th.name{i-1});
+            a_i = a.(a.name{i});
+            a_1i = a.(a.name{i-1});        
+            delta_i1 = delta.(delta.name{i+1});
+
+            delta_i = (th_i*delta_i1')'.*(a_i.*(1 - a_i));
+            delta.(delta.name{i}) = delta_i;
+            aux = (1/length(y))*(delta_i'*a_1i)' + obj.lambda*th_1i;
             grad(last-size(aux,1)*size(aux,2)+1:last) = reshape(aux,[1,size(aux,1)*size(aux,2)]);
             last = last - size(aux,1)*size(aux,2);
        end
