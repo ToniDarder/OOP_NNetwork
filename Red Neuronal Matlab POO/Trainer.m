@@ -39,24 +39,15 @@ classdef Trainer < handle
            theta = fminunc(F,obj.theta0,options);          
         end
 
-        function [J,grad_auto] = computeCost(obj,x,y,sizes,theta)
+        function [j_auto,grad_auto] = computeCost(obj,x,y,sizes,theta)
            [a, J] = obj.forwardprop(x,y,theta,sizes);
             grad = obj.backwardprop(a,y,theta,sizes);
 
             theta_dl = dlarray(theta);
             J_dl = @(theta) obj.f_autodiff(x,y,theta,sizes);
             [loss,gradval] = dlfeval(J_dl,theta_dl);
-            grad_auto = extractdata(gradval);
-            g_err = norm(grad_auto-grad)/norm(grad_auto);
-            J_err = abs(loss-J);
-            error = false;
-            if (g_err > 1e-2)
-                disp('The error in loss is: ')
-                disp(J_err)
-                disp('The gradient error is: ')
-                disp(g_err)
-                error = true;
-            end         
+            grad_auto = extractdata(gradval);   
+            j_auto = extractdata(loss); 
         end
         
         function [J,dF_dtheta] = f_autodiff(obj,x,y,theta,sizes)
@@ -134,7 +125,7 @@ classdef Trainer < handle
            delta_e = delta.(delta.name{end});
            a_e1 = a.(a.name{end-1});
            th_e = th.(th.name{end});
-           aux = (1/length(y))*(delta_e'*a_e1)' + obj.lambda*th_e;
+           aux = (1/length(y))*((delta_e'*a_e1)' + obj.lambda*th_e);
            last = size(aux,1)*size(aux,2);
            grad((end-last+1):end) = reshape(aux,[1,size(aux,1)*size(aux,2)]);
            last = len - last;
@@ -149,7 +140,7 @@ classdef Trainer < handle
 
             delta_i = (th_i*delta_i1')'.*(a_i.*(1 - a_i));
             delta.(delta.name{i}) = delta_i;
-            aux = (1/length(y))*(delta_i'*a_1i)' + obj.lambda*th_1i;
+            aux = (1/length(y))*((delta_i'*a_1i)' + obj.lambda*th_1i);
             grad(last-size(aux,1)*size(aux,2)+1:last) = reshape(aux,[1,size(aux,1)*size(aux,2)]);
             last = last - size(aux,1)*size(aux,2);
        end

@@ -1,5 +1,6 @@
 %% Class for data objects, stores Xdata and Ydata matrices and has methods to Split Train-Test, Compute Xfull...
-
+% The input has to be a matrix .csv/.mat ..., where the columns are the features and the
+% last one being the labels for the groups numbered (1,2,3,...)
 classdef Data < handle
     properties (Access = public)
         Xdata
@@ -40,15 +41,14 @@ classdef Data < handle
         function loadData(obj,FN)
             data = load(FN);
             X = data.meas(:, [3 4]);
-            ydata = data.meas(:, 5);
+            ydata = data.meas(:, end);
             y = zeros(length(ydata),max(ydata));
+            c = unique(ydata);
             for i=1:length(ydata)
-                if ydata(i)==1
-                    y(i,1)=1;
-                elseif ydata(i)==2
-                    y(i,2)=1;
-                else
-                    y(i,3)=1;
+                for j = 1:length(c)
+                    if ydata(i) == c(j)
+                        y(i,j) = 1;
+                    end
                 end
             end
             obj.Xdata = X;
