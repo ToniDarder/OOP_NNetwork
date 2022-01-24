@@ -3,6 +3,7 @@
 % last one being the labels for the groups numbered (1,2,3,...)
 classdef Data < handle
     properties (Access = public)
+        Xfullfeat
         Xdata
         Ydata
         Xfull
@@ -31,7 +32,7 @@ classdef Data < handle
 
         function plotdata(obj)
             % Plots all the data labeled by colour in one figure 
-            gscatter(obj.Xdata(:,1),obj.Xdata(:,2),obj.Ydata,'bgr','xo*')
+            gscatter(obj.Xdata(:,1),obj.Xdata(:,2),obj.Ydata,'bgrcmyk','xo*+.sd')
             xlabel("X3");
             ylabel("X4");
         end
@@ -39,9 +40,10 @@ classdef Data < handle
 
     methods (Access = private)
         function loadData(obj,FN)
-            data = load(FN);
-            X = data.meas(:, [3 4]);
-            ydata = data.meas(:, end);
+            f = fullfile('/','home','toni','Escritorio','TFG','Red Neuronal Matlab POO','Datasets', FN);
+            data = load(f);
+            X = data(:, [3 4]);
+            ydata = data(:, end);
             y = zeros(length(ydata),max(ydata));
             c = unique(ydata);
             for i=1:length(ydata)
@@ -53,6 +55,7 @@ classdef Data < handle
             end
             obj.Xdata = X;
             obj.Ydata = y;
+            obj.Xfullfeat = data;
         end
         
         function splitdata(obj)

@@ -20,9 +20,9 @@ classdef Trainer < handle
            sizes = nn.sizes;
            X = data.Xfull;
            Y = data.Yfull;
-           obj.computeinitialtheta(sizes);     
+           obj.computeinitialtheta(sizes,size(X,2));     
            tOpt_v = obj.solveTheta(X,Y,sizes,showgraph);
-           tOpt_m = obj.thetavec_to_thetamat(tOpt_v,sizes);
+           tOpt_m = obj.thetavec_to_thetamat(tOpt_v,sizes,size(X,2));
         end
     end
     
@@ -40,23 +40,24 @@ classdef Trainer < handle
         end
 
         function [j_auto,grad_auto] = computeCost(obj,x,y,sizes,theta)
-           [a, J] = obj.forwardprop(x,y,theta,sizes);
-            grad = obj.backwardprop(a,y,theta,sizes);
+            numfeat = size(x,2);
+           [a, J] = obj.forwardprop(x,y,theta,sizes,numfeat);
+            grad = obj.backwardprop(a,y,theta,sizes,numfeat);
 
             theta_dl = dlarray(theta);
-            J_dl = @(theta) obj.f_autodiff(x,y,theta,sizes);
+            J_dl = @(theta) obj.f_autodiff(x,y,theta,sizes,numfeat);
             [loss,gradval] = dlfeval(J_dl,theta_dl);
             grad_auto = extractdata(gradval);   
             j_auto = extractdata(loss); 
         end
         
-        function [J,dF_dtheta] = f_autodiff(obj,x,y,theta,sizes)
-            [~,J] = obj.forwardprop(x,y,theta,sizes);
+        function [J,dF_dtheta] = f_autodiff(obj,x,y,theta,sizes,numfeat)
+            [~,J] = obj.forwardprop(x,y,theta,sizes,numfeat);
             dF_dtheta = dlgradient(J,theta);
         end
 
-        function [a, J] = forwardprop(obj,x,y,theta,sizes)
-            thetamat = obj.thetavec_to_thetamat(theta,sizes);            
+        function [a, J] = forwardprop(obj,x,y,theta,sizes,numfeat)
+            thetamat = obj.thetavec_to_thetamat(theta,sizes,numfeat);            
             a = obj.create_activation_fcn(sizes,x);
             for i = 1:length(sizes)               
                 a = obj.save_activation_fcn_i(a,thetamat,i);
@@ -64,9 +65,9 @@ classdef Trainer < handle
             J = obj.get_fcn_value(sizes,theta,y,a.(a.name{end}));           
        end
        
-       function grad = backwardprop(obj,a,y,theta,sizes)  
+       function grad = backwardprop(obj,a,y,theta,sizes,numfeat)  
             len = length(theta);
-            thetamat = obj.thetavec_to_thetamat(theta,sizes);
+            thetamat = obj.thetavec_to_thetamat(theta,sizes,numfeat);
             delta = create_delta(obj,sizes,a,y);
             [grad,last] = obj.create_gradient(y,a,delta,thetamat,len);
             for i = length(sizes):-1:2
@@ -74,18 +75,18 @@ classdef Trainer < handle
             end
        end
        
-       function computeinitialtheta(obj,sizes)
-           count = sizes(end)*sizes(1);
+       function computeinitialtheta(obj,sizes,numfeat)
+           count = numfeat*sizes(1);
            for i = 2:length(sizes)
                 count = count + sizes(i-1)*sizes(i);
            end
            obj.theta0 = zeros(1,count);
        end
        
-       function thetamat = thetavec_to_thetamat(obj,thetavec,sizes)
+       function thetamat = thetavec_to_thetamat(obj,thetavec,sizes,numfeat)
            thetamat.name = genvarname(repmat({'l'},1,length(sizes)),'l');
-           last = sizes(1)*sizes(end);
-           aux = reshape(thetavec(1:last),[sizes(end),sizes(1)]);
+           last = sizes(1)*numfeat;
+           aux = reshape(thetavec(1:last),[numfeat,sizes(1)]);
            thetamat.(thetamat.name{1}) = aux;
            for i = 2:length(sizes)
                aux = reshape(thetavec(last+1:(last+sizes(i)*sizes(i-1))),[sizes(i-1),sizes(i)]);
