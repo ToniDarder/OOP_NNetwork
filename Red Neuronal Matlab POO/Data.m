@@ -67,7 +67,7 @@ classdef Data < handle
 
     methods (Access = private)
         function loadData(obj,FN)
-            f = fullfile('/','home','toni','Escritorio','TFG','Red Neuronal Matlab POO','Datasets', FN);
+            f = fullfile('Datasets', FN);
             data = load(f);
             X = data(:, [3 4]);
             ydata = data(:, end);
