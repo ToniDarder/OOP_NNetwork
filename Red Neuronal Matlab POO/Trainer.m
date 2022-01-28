@@ -8,6 +8,8 @@ classdef Trainer < handle
 
     properties (Access = private)        
         theta0
+        hist_Cost
+        numData
     end
 
     methods (Access = public)
@@ -20,9 +22,10 @@ classdef Trainer < handle
            sizes = nn.sizes;
            X = data.Xfull;
            Y = data.Yfull;
-           obj.computeinitialtheta(sizes);     
+           obj.numData = size(Y,1);
+           obj.computeinitialtheta(sizes,size(X,2));     
            tOpt_v = obj.solveTheta(X,Y,sizes,showgraph);
-           tOpt_m = obj.thetavec_to_thetamat(tOpt_v,sizes);
+           tOpt_m = obj.thetavec_to_thetamat(tOpt_v,sizes,size(X,2));
         end
     end
     
@@ -31,51 +34,65 @@ classdef Trainer < handle
 
         function theta = solveTheta(obj,x,y,sizes,dis)
            if dis == true
-                options = optimoptions(@fminunc,'SpecifyObjectiveGradient',true,'Display','iter','Algorithm','quasi-newton','PlotFcn',{@optimplotfval},'StepTolerance',10^(-6),'MaxFunEvals',3000,'CheckGradients',true);
+                options = optimoptions(@fminunc,'SpecifyObjectiveGradient',true,'Display','iter','Algorithm','quasi-newton','StepTolerance',10^(-6),'MaxFunEvals',3000,'CheckGradients',true,'OutputFcn',@obj.myoutput);
            else
                 options = optimoptions(@fminunc,'Algorithm','quasi-newton','StepTolerance',10^(-6),'MaxFunEvals',1000);
            end
            F = @(theta) obj.computeCost(x,y,sizes,theta);     
-           theta = fminunc(F,obj.theta0,options);          
+           theta = fminunc(F,obj.theta0,options); 
+           figure
+           plot(2:size(obj.hist_Cost,2),obj.hist_Cost(1,2:end),'d',2:size(obj.hist_Cost,2),obj.hist_Cost(2,2:end),'d')
+           legend('Loss','Function value')
         end
 
-        function [J,grad_auto] = computeCost(obj,x,y,sizes,theta)
-           [a, J] = obj.forwardprop(x,y,theta,sizes);
-            grad = obj.backwardprop(a,y,theta,sizes);
+        function stop = myoutput(obj,theta,optimvalues,state)
+            stop = false;  
+            iter = optimvalues.iteration;
+            if isequal(state,'init')
+%               Thistory = [];
+              obj.hist_Cost = [0;0];
+            end        
+            if isequal(state,'iter')
+%               Thistory = [Thistory, x];
+              f = optimvalues.fval;
+              c = f - obj.get_regularization_term(theta);
+%               if mod(iter,10) == 0
+%                 PlotBoundary(data,NN)
+%               end
+              obj.hist_Cost = [obj.hist_Cost(1,:), c;
+                               obj.hist_Cost(2,:), f];
+            end
+        end
+
+        function [j_auto,grad_auto] = computeCost(obj,x,y,sizes,theta)
+            numfeat = size(x,2);
+%            [a, J,loss] = obj.forwardprop(x,y,theta,sizes,numfeat);
+%             grad = obj.backwardprop(a,y,theta,sizes,numfeat);
 
             theta_dl = dlarray(theta);
-            J_dl = @(theta) obj.f_autodiff(x,y,theta,sizes);
-            [loss,gradval] = dlfeval(J_dl,theta_dl);
-            grad_auto = extractdata(gradval);
-            g_err = norm(grad_auto-grad)/norm(grad_auto);
-            J_err = abs(loss-J);
-            error = false;
-            if (g_err > 1e-2)
-                disp('The error in loss is: ')
-                disp(J_err)
-                disp('The gradient error is: ')
-                disp(g_err)
-                error = true;
-            end         
+            J_dl = @(theta) obj.f_autodiff(x,y,theta,sizes,numfeat);
+            [j_auto,grad_auto] = dlfeval(J_dl,theta_dl);
+            grad_auto = extractdata(grad_auto);   
+            j_auto = extractdata(j_auto); 
         end
         
-        function [J,dF_dtheta] = f_autodiff(obj,x,y,theta,sizes)
-            [~,J] = obj.forwardprop(x,y,theta,sizes);
+        function [J,dF_dtheta] = f_autodiff(obj,x,y,theta,sizes,numfeat)
+            [~,J] = obj.forwardprop(x,y,theta,sizes,numfeat);
             dF_dtheta = dlgradient(J,theta);
         end
 
-        function [a, J] = forwardprop(obj,x,y,theta,sizes)
-            thetamat = obj.thetavec_to_thetamat(theta,sizes);            
+        function [a, J] = forwardprop(obj,x,y,theta,sizes,numfeat)
+            thetamat = obj.thetavec_to_thetamat(theta,sizes,numfeat);            
             a = obj.create_activation_fcn(sizes,x);
             for i = 1:length(sizes)               
                 a = obj.save_activation_fcn_i(a,thetamat,i);
             end
-            J = obj.get_fcn_value(sizes,theta,y,a.(a.name{end}));           
+            J = obj.get_fcn_value(sizes,theta,y,a.(a.name{end}));  
        end
        
-       function grad = backwardprop(obj,a,y,theta,sizes)  
+       function grad = backwardprop(obj,a,y,theta,sizes,numfeat)  
             len = length(theta);
-            thetamat = obj.thetavec_to_thetamat(theta,sizes);
+            thetamat = obj.thetavec_to_thetamat(theta,sizes,numfeat);
             delta = create_delta(obj,sizes,a,y);
             [grad,last] = obj.create_gradient(y,a,delta,thetamat,len);
             for i = length(sizes):-1:2
@@ -83,18 +100,18 @@ classdef Trainer < handle
             end
        end
        
-       function computeinitialtheta(obj,sizes)
-           count = sizes(end)*sizes(1);
+       function computeinitialtheta(obj,sizes,numfeat)
+           count = numfeat*sizes(1);
            for i = 2:length(sizes)
                 count = count + sizes(i-1)*sizes(i);
            end
            obj.theta0 = zeros(1,count);
        end
        
-       function thetamat = thetavec_to_thetamat(obj,thetavec,sizes)
+       function thetamat = thetavec_to_thetamat(obj,thetavec,sizes,numfeat)
            thetamat.name = genvarname(repmat({'l'},1,length(sizes)),'l');
-           last = sizes(1)*sizes(end);
-           aux = reshape(thetavec(1:last),[sizes(end),sizes(1)]);
+           last = sizes(1)*numfeat;
+           aux = reshape(thetavec(1:last),[numfeat,sizes(1)]);
            thetamat.(thetamat.name{1}) = aux;
            for i = 2:length(sizes)
                aux = reshape(thetavec(last+1:(last+sizes(i)*sizes(i-1))),[sizes(i-1),sizes(i)]);
@@ -121,7 +138,12 @@ classdef Trainer < handle
                 err0 = y(:,i).*(-log(g(:,i)));
                 J_vec(i) = (1/length(y))*sum(err1+err0);
             end
-            J = sum(J_vec) + 0.5/length(y)*obj.lambda*(theta*theta');
+            J = sum(J_vec) + obj.get_regularization_term(theta);
+            
+       end
+
+       function reg_term = get_regularization_term(obj,theta)
+            reg_term = 0.5/obj.numData*obj.lambda*(theta*theta');
        end
 
        function delta = create_delta(obj,sizes,a,y)
@@ -134,7 +156,7 @@ classdef Trainer < handle
            delta_e = delta.(delta.name{end});
            a_e1 = a.(a.name{end-1});
            th_e = th.(th.name{end});
-           aux = (1/length(y))*(delta_e'*a_e1)' + obj.lambda*th_e;
+           aux = (1/length(y))*((delta_e'*a_e1)' + obj.lambda*th_e);
            last = size(aux,1)*size(aux,2);
            grad((end-last+1):end) = reshape(aux,[1,size(aux,1)*size(aux,2)]);
            last = len - last;
@@ -149,7 +171,7 @@ classdef Trainer < handle
 
             delta_i = (th_i*delta_i1')'.*(a_i.*(1 - a_i));
             delta.(delta.name{i}) = delta_i;
-            aux = (1/length(y))*(delta_i'*a_1i)' + obj.lambda*th_1i;
+            aux = (1/length(y))*((delta_i'*a_1i)' + obj.lambda*th_1i);
             grad(last-size(aux,1)*size(aux,2)+1:last) = reshape(aux,[1,size(aux,1)*size(aux,2)]);
             last = last - size(aux,1)*size(aux,2);
        end

@@ -2,7 +2,7 @@ clear;
 clc;
 load('IrisTest.mat');
 nn = Network([3],'linear');
-data1 = Data('iris.mat',0,1);
+data1 = Data('iris.csv',0,1);
 showgraph = false;
 linear_trainer = Trainer(0,'linear');
 [nn.thetaOpt,nn.thetaOpt_m] = linear_trainer.train(nn,data1,showgraph);
@@ -12,3 +12,4 @@ if Error < 5*10^(-2)
 else
     disp('Test Failed');
 end
+clear;

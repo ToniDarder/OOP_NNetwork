@@ -1,15 +1,23 @@
-clear;
-clc;
 %% Testing with a sample nn
-Iris_Test;
+% Iris_Test;
 
-%% Create Network, data and trainer
-lambda = 0;
-testratio = 0;
-d = 1;
-mynet_iris = Network([2,2,2,3],'linear');
-data1 = Data('iris.mat',testratio,d);
+%% Initialization of parameters
+lambdavec = linspace(1*10^-3,5*10^-2,10);
+%lambda = lambdavec(6);
+%lambda = 3.3*10^-4; % [3,3]
+lambda = 3.3*10^-4;
+
+datasets = ["iris.csv", "SteelPlateFaults_datax27y1n1941.csv"];     % List of Datasets 
+file = datasets(1);                                                 % Selected dataset
+testratio = 0;                                                      % Percentage of data destined for testing
+pol_deg = 1;                                                        % Polinomial degree for feature combinations (1 = given features)
+net_structure = [3,3];                                              % Distribution of layers and neurons in the NN. last layer should be equal to the the number of groups 
+
+% Initialize the objects (Data, Network, Trainer)
+mynet_iris = Network(net_structure,'linear');
+data1 = Data(file,testratio,pol_deg);
 linear_trainer = Trainer(lambda,'linear');
+% data1.var_corrmatrix();
 
 %% Train the networks and plot boundaries
 showgraph = true;

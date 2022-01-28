@@ -1,7 +1,9 @@
 %% Class for data objects, stores Xdata and Ydata matrices and has methods to Split Train-Test, Compute Xfull...
-
+% The input has to be a matrix .csv/.mat ..., where the columns are the features and the
+% last one being the labels for the groups numbered (1,2,3,...)
 classdef Data < handle
     properties (Access = public)
+        Xfullfeat
         Xdata
         Ydata
         Xfull
@@ -30,29 +32,57 @@ classdef Data < handle
 
         function plotdata(obj)
             % Plots all the data labeled by colour in one figure 
-            gscatter(obj.Xdata(:,1),obj.Xdata(:,2),obj.Ydata,'bgr','xo*')
+            gscatter(obj.Xdata(:,1),obj.Xdata(:,2),obj.Ydata,'bgrcmyk','xo*+.sd')
             xlabel("X3");
             ylabel("X4");
+        end
+
+        function var_corrmatrix(obj)
+            x = obj.Xfullfeat;
+            y = obj.Ydata;
+            f = size(x,2);
+            figure            
+            t = tiledlayout(f,f,'TileSpacing','Compact'); 
+            title(t,'Features correlation matrix');
+            for i = 1:f
+                for j = 1:f
+                    nexttile((i-1)*f+j)
+                    if i == j
+                        
+                    elseif j > i
+                        gscatter(x(:,j),x(:,i),y,'bgrcmyk','xo*+.sd',[5 5 5],'off')
+                    end
+                    if j == 1
+                        txt = ['X',num2str(i)];
+                        ylabel(txt)
+                    end
+                    if i == f
+                        txt = ['X',num2str(j)];
+                        xlabel(txt)
+                    end                    
+                end
+            end
         end
     end
 
     methods (Access = private)
         function loadData(obj,FN)
-            data = load(FN);
-            X = data.meas(:, [3 4]);
-            ydata = data.meas(:, 5);
+            f = fullfile('/','home','toni','Escritorio','TFG','Red Neuronal Matlab POO','Datasets', FN);
+            data = load(f);
+            X = data(:, [3 4]);
+            ydata = data(:, end);
             y = zeros(length(ydata),max(ydata));
+            c = unique(ydata);
             for i=1:length(ydata)
-                if ydata(i)==1
-                    y(i,1)=1;
-                elseif ydata(i)==2
-                    y(i,2)=1;
-                else
-                    y(i,3)=1;
+                for j = 1:length(c)
+                    if ydata(i) == c(j)
+                        y(i,j) = 1;
+                    end
                 end
             end
             obj.Xdata = X;
             obj.Ydata = y;
+            obj.Xfullfeat = data(:,1:(end-1));
         end
         
         function splitdata(obj)
