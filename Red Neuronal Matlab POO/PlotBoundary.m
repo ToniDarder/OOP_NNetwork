@@ -4,14 +4,16 @@ function PlotBoundary(data,NN)
     n = size(X,2);
     m = size(X,1);
     n_pts = 200;
-    
-    x1 = linspace(1.5*min(X(:,2)),1.5*max(X(:,2)),n_pts)';
-    x2 = min(X(:,3)) + zeros(n_pts,1);
+    graphzoom = 10;
+    extra_f1 = mean(X(:,2))*graphzoom;
+    extra_f2 = mean(X(:,3))*graphzoom;
+    x1 = linspace(min(X(:,2))-extra_f1,max(X(:,2))+extra_f1,n_pts)';
+    x2 = min(X(:,3)) - extra_f2 + zeros(n_pts,1);
     x2_aux = zeros(n_pts,1);
     
     X_test = zeros(n_pts,n,n_pts);
     h = zeros(n_pts*NN.sizes(end),n_pts);
-    deltaX2 = (1.5*max(X(:,3)) - 1.5*min(X(:,3)))/n_pts;
+    deltaX2 = (max(X(:,3)) - min(X(:,3)) + 2*extra_f2)/n_pts;
     for i = 1:n_pts 
         x2 = x2 + deltaX2;
         x2_aux(i) = x2(1);

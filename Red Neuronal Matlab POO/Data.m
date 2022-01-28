@@ -36,6 +36,33 @@ classdef Data < handle
             xlabel("X3");
             ylabel("X4");
         end
+
+        function var_corrmatrix(obj)
+            x = obj.Xfullfeat;
+            y = obj.Ydata;
+            f = size(x,2);
+            figure            
+            t = tiledlayout(f,f,'TileSpacing','Compact'); 
+            title(t,'Features correlation matrix');
+            for i = 1:f
+                for j = 1:f
+                    nexttile((i-1)*f+j)
+                    if i == j
+                        
+                    elseif j > i
+                        gscatter(x(:,j),x(:,i),y,'bgrcmyk','xo*+.sd',[5 5 5],'off')
+                    end
+                    if j == 1
+                        txt = ['X',num2str(i)];
+                        ylabel(txt)
+                    end
+                    if i == f
+                        txt = ['X',num2str(j)];
+                        xlabel(txt)
+                    end                    
+                end
+            end
+        end
     end
 
     methods (Access = private)
@@ -55,7 +82,7 @@ classdef Data < handle
             end
             obj.Xdata = X;
             obj.Ydata = y;
-            obj.Xfullfeat = data;
+            obj.Xfullfeat = data(:,1:(end-1));
         end
         
         function splitdata(obj)

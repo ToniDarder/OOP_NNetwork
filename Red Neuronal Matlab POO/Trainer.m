@@ -8,6 +8,8 @@ classdef Trainer < handle
 
     properties (Access = private)        
         theta0
+        hist_Cost
+        numData
     end
 
     methods (Access = public)
@@ -20,6 +22,7 @@ classdef Trainer < handle
            sizes = nn.sizes;
            X = data.Xfull;
            Y = data.Yfull;
+           obj.numData = size(Y,1);
            obj.computeinitialtheta(sizes,size(X,2));     
            tOpt_v = obj.solveTheta(X,Y,sizes,showgraph);
            tOpt_m = obj.thetavec_to_thetamat(tOpt_v,sizes,size(X,2));
@@ -31,24 +34,46 @@ classdef Trainer < handle
 
         function theta = solveTheta(obj,x,y,sizes,dis)
            if dis == true
-                options = optimoptions(@fminunc,'SpecifyObjectiveGradient',true,'Display','iter','Algorithm','quasi-newton','PlotFcn',{@optimplotfval},'StepTolerance',10^(-6),'MaxFunEvals',3000,'CheckGradients',true);
+                options = optimoptions(@fminunc,'SpecifyObjectiveGradient',true,'Display','iter','Algorithm','quasi-newton','StepTolerance',10^(-6),'MaxFunEvals',3000,'CheckGradients',true,'OutputFcn',@obj.myoutput);
            else
                 options = optimoptions(@fminunc,'Algorithm','quasi-newton','StepTolerance',10^(-6),'MaxFunEvals',1000);
            end
            F = @(theta) obj.computeCost(x,y,sizes,theta);     
-           theta = fminunc(F,obj.theta0,options);          
+           theta = fminunc(F,obj.theta0,options); 
+           figure
+           plot(2:size(obj.hist_Cost,2),obj.hist_Cost(1,2:end),'d',2:size(obj.hist_Cost,2),obj.hist_Cost(2,2:end),'d')
+           legend('Loss','Function value')
+        end
+
+        function stop = myoutput(obj,theta,optimvalues,state)
+            stop = false;  
+            iter = optimvalues.iteration;
+            if isequal(state,'init')
+%               Thistory = [];
+              obj.hist_Cost = [0;0];
+            end        
+            if isequal(state,'iter')
+%               Thistory = [Thistory, x];
+              f = optimvalues.fval;
+              c = f - obj.get_regularization_term(theta);
+%               if mod(iter,10) == 0
+%                 PlotBoundary(data,NN)
+%               end
+              obj.hist_Cost = [obj.hist_Cost(1,:), c;
+                               obj.hist_Cost(2,:), f];
+            end
         end
 
         function [j_auto,grad_auto] = computeCost(obj,x,y,sizes,theta)
             numfeat = size(x,2);
-           [a, J] = obj.forwardprop(x,y,theta,sizes,numfeat);
-            grad = obj.backwardprop(a,y,theta,sizes,numfeat);
+%            [a, J,loss] = obj.forwardprop(x,y,theta,sizes,numfeat);
+%             grad = obj.backwardprop(a,y,theta,sizes,numfeat);
 
             theta_dl = dlarray(theta);
             J_dl = @(theta) obj.f_autodiff(x,y,theta,sizes,numfeat);
-            [loss,gradval] = dlfeval(J_dl,theta_dl);
-            grad_auto = extractdata(gradval);   
-            j_auto = extractdata(loss); 
+            [j_auto,grad_auto] = dlfeval(J_dl,theta_dl);
+            grad_auto = extractdata(grad_auto);   
+            j_auto = extractdata(j_auto); 
         end
         
         function [J,dF_dtheta] = f_autodiff(obj,x,y,theta,sizes,numfeat)
@@ -62,7 +87,7 @@ classdef Trainer < handle
             for i = 1:length(sizes)               
                 a = obj.save_activation_fcn_i(a,thetamat,i);
             end
-            J = obj.get_fcn_value(sizes,theta,y,a.(a.name{end}));           
+            J = obj.get_fcn_value(sizes,theta,y,a.(a.name{end}));  
        end
        
        function grad = backwardprop(obj,a,y,theta,sizes,numfeat)  
@@ -113,7 +138,12 @@ classdef Trainer < handle
                 err0 = y(:,i).*(-log(g(:,i)));
                 J_vec(i) = (1/length(y))*sum(err1+err0);
             end
-            J = sum(J_vec) + 0.5/length(y)*obj.lambda*(theta*theta');
+            J = sum(J_vec) + obj.get_regularization_term(theta);
+            
+       end
+
+       function reg_term = get_regularization_term(obj,theta)
+            reg_term = 0.5/obj.numData*obj.lambda*(theta*theta');
        end
 
        function delta = create_delta(obj,sizes,a,y)

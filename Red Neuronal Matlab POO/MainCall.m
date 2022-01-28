@@ -1,11 +1,11 @@
 %% Testing with a sample nn
-Iris_Test;
+% Iris_Test;
 
 %% Initialization of parameters
 lambdavec = linspace(1*10^-3,5*10^-2,10);
 %lambda = lambdavec(6);
 %lambda = 3.3*10^-4; % [3,3]
-lambda = 0;
+lambda = 3.3*10^-4;
 
 datasets = ["iris.csv", "SteelPlateFaults_datax27y1n1941.csv"];     % List of Datasets 
 file = datasets(1);                                                 % Selected dataset
@@ -17,6 +17,7 @@ net_structure = [3,3];                                              % Distributi
 mynet_iris = Network(net_structure,'linear');
 data1 = Data(file,testratio,pol_deg);
 linear_trainer = Trainer(lambda,'linear');
+% data1.var_corrmatrix();
 
 %% Train the networks and plot boundaries
 showgraph = true;
