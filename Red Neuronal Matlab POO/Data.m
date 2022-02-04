@@ -14,6 +14,7 @@ classdef Data < handle
         Num_Features
         TestPercentage
         full_d
+        Num_Labels
     end
     properties (Access = private)
         Xtrain
@@ -26,6 +27,7 @@ classdef Data < handle
             obj.Num_Features = size(obj.Xdata,2);
             obj.TestPercentage = Tper;
             obj.full_d = d;
+            obj.Num_Labels = size(obj.Ydata,2);
             obj.splitdata()
             obj.computefullvars(obj.Xtrain,obj.full_d)
         end

@@ -17,7 +17,7 @@ net_structure = [3,3];                                              % Distributi
 mynet_iris = Network(net_structure,'linear');
 data1 = Data(file,testratio,pol_deg);
 linear_trainer = Trainer(lambda,'linear');
-% data1.var_corrmatrix();
+data1.var_corrmatrix();
 
 %% Train the networks and plot boundaries
 showgraph = true;
