@@ -9,7 +9,6 @@ classdef Network < handle
    end
    properties (Access = private)
       num_layers
-      theta0
    end
 
    methods (Access = public)

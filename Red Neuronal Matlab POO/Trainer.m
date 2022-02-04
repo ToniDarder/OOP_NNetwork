@@ -55,8 +55,12 @@ classdef Trainer < handle
            F = @(theta) obj.computeCost(theta);     
            theta = fminunc(F,obj.theta0,opt); 
            figure
-           plot(2:size(obj.hist_Cost,2),obj.hist_Cost(1,2:end),'d',2:size(obj.hist_Cost,2),obj.hist_Cost(2,2:end),'d')
-           legend('Loss','Function value')
+           f = obj.hist_Cost(1,2:end);
+           c = obj.hist_Cost(2,2:end);
+           r = obj.hist_Cost(3,2:end)*obj.lambda;
+           v = 2:size(obj.hist_Cost,2);
+           plot(v,f,'dr',v,c,'db',v,r,'dg')
+           legend('Fval','Loss','Regularization')
         end
 
         function stop = myoutput(obj,theta,optimvalues,state)
@@ -64,7 +68,7 @@ classdef Trainer < handle
             iter = optimvalues.iteration;
             if isequal(state,'init')
 %               Thistory = [];
-              obj.hist_Cost = [0;0];
+              obj.hist_Cost = [0;0;0];
             end        
             if isequal(state,'iter')
 %               Thistory = [Thistory, x];
@@ -72,12 +76,12 @@ classdef Trainer < handle
               [c,~] = obj.computeLossFunction(theta);
                r = obj.computeRegularizationTerm(theta);
  
-             % c = f - obj.computeRegularizationTerm(theta);
 %               if mod(iter,10) == 0
 %                 PlotBoundary(data,NN)
 %               end
-              obj.hist_Cost = [obj.hist_Cost(1,:), c;
-                               obj.hist_Cost(2,:), f];
+              obj.hist_Cost = [obj.hist_Cost(1,:), f;
+                               obj.hist_Cost(2,:), c;
+                               obj.hist_Cost(3,:), r];
             end
         end
 
