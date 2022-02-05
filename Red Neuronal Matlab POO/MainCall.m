@@ -1,5 +1,6 @@
 %% Testing with a sample nn
-% Iris_Test;
+clear; close all; clc;
+Iris_Test;
 
 %% Initialization of parameters
 lambdavec = linspace(1*10^-3,5*10^-2,10);
@@ -21,6 +22,6 @@ data1.var_corrmatrix();
 
 %% Train the networks and plot boundaries
 showgraph = true;
-[mynet_iris.thetaOpt,mynet_iris.thetaOpt_m] = linear_trainer.train(mynet_iris,data1,showgraph);
-PlotBoundary(data1,mynet_iris);
+linear_trainer.train(mynet_iris,data1,showgraph);
+mynet_iris.plotBoundary(data1);
 

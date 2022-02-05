@@ -10,26 +10,26 @@ classdef Data < handle
         Yfull       
         Xtest
         Ytest
-        Num_Experiences
-        Num_Features
-        TestPercentage
-        full_d
-        Num_Labels
+        numData
+        numFeatures
+        numLabels
+        testPercentage
+        polyGrade       
     end
     properties (Access = private)
         Xtrain
         Ytrain
     end
     methods (Access = public)
-        function obj = Data(File_Name,Tper,d)
+        function obj = Data(File_Name,TP,d)
             obj.loadData(File_Name);
-            obj.Num_Experiences = size(obj.Xdata,1);
-            obj.Num_Features = size(obj.Xdata,2);
-            obj.TestPercentage = Tper;
-            obj.full_d = d;
-            obj.Num_Labels = size(obj.Ydata,2);
+            obj.numData = size(obj.Xdata,1);
+            obj.testPercentage = TP;
+            obj.polyGrade = d;
+            obj.numLabels = size(obj.Ydata,2);
             obj.splitdata()
-            obj.computefullvars(obj.Xtrain,obj.full_d)
+            obj.computefullvars(obj.Xtrain,obj.polyGrade)
+            obj.numFeatures = size(obj.Xfull,2);
         end
 
         function plotdata(obj)
@@ -42,15 +42,15 @@ classdef Data < handle
         function var_corrmatrix(obj)
             x = obj.Xfullfeat;
             y = obj.Ydata;
-            f = size(x,2);
+            nf = size(x,2);
             figure            
-            t = tiledlayout(f,f,'TileSpacing','Compact'); 
+            t = tiledlayout(nf,nf,'TileSpacing','Compact'); 
             title(t,'Features correlation matrix');
-            for i = 1:f
-                for j = 1:f
-                    nexttile((i-1)*f+j)
+            for i = 1:nf
+                for j = 1:nf
+                    nexttile((i-1)*nf+j)
                     if i == j
-                        
+                        histogram(x(:,i))
                     elseif j > i
                         gscatter(x(:,j),x(:,i),y,'bgrcmyk','xo*+.sd',[5 5 5],'off')
                     end
@@ -58,7 +58,7 @@ classdef Data < handle
                         txt = ['X',num2str(i)];
                         ylabel(txt)
                     end
-                    if i == f
+                    if i == nf
                         txt = ['X',num2str(j)];
                         xlabel(txt)
                     end                    
@@ -71,44 +71,44 @@ classdef Data < handle
         function loadData(obj,FN)
             f = fullfile('Datasets', FN);
             data = load(f);
-            X = data(:, [3 4]);
+            x = data(:, [3 4]);
             ydata = data(:, end);
             y = zeros(length(ydata),max(ydata));
-            c = unique(ydata);
+            u = unique(ydata);
             for i=1:length(ydata)
-                for j = 1:length(c)
-                    if ydata(i) == c(j)
+                for j = 1:length(u)
+                    if ydata(i) == u(j)
                         y(i,j) = 1;
                     end
                 end
             end
-            obj.Xdata = X;
+            obj.Xdata = x;
             obj.Ydata = y;
             obj.Xfullfeat = data(:,1:(end-1));
         end
         
         function splitdata(obj)
             % Shuffles the data and splits data in train and test
-            Nexp = obj.Num_Experiences;
-            Tper = obj.TestPercentage;
-            r = randperm(Nexp);
-            ntest = round(Tper/100*Nexp);
-            ntrain = Nexp - ntest;
+            nD = obj.numData;
+            TP = obj.testPercentage;
+            r = randperm(nD);
+            ntest = round(TP/100*nD);
+            ntrain = nD - ntest;
             obj.Xtrain = obj.Xdata(r(1:ntrain),:);
             obj.Xtest = obj.Xdata(r((ntrain + 1):end),:);
             obj.Ytrain = obj.Ydata(r(1:ntrain),:);
             obj.Ytest = obj.Ydata(r((ntrain + 1):end),:);
         end
 
-        function computefullvars(obj,X,d)
+        function computefullvars(obj,x,d)
             % Builds a X matrix with more features using lineal combinations
-            X1 = X(:,1); 
-            X2 = X(:,2);
-            contador = 1;
+            x1 = x(:,1); 
+            x2 = x(:,2);
+            cont = 1;
             for g = 0:d
                 for a = 0:g
-                       Xful(:,contador) = X2.^(a).*X1.^(g-a);
-                       contador = contador+1;
+                       Xful(:,cont) = x2.^(a).*x1.^(g-a);
+                       cont = cont+1;
                 end
             end
             obj.Xfull = Xful;

@@ -1,8 +1,6 @@
 %% Plot the data and the boundary conds
-function PlotBoundary(data,NN)
-    X = data.Xfull;
-    n = size(X,2);
-    m = size(X,1);
+function PlotBoundary(X,NN)
+    nF = size(X,2);
     n_pts = 200;
     graphzoom = 10;
     extra_f1 = mean(X(:,2))*graphzoom;
@@ -11,7 +9,7 @@ function PlotBoundary(data,NN)
     x2 = min(X(:,3)) - extra_f2 + zeros(n_pts,1);
     x2_aux = zeros(n_pts,1);
     
-    X_test = zeros(n_pts,n,n_pts);
+    X_test = zeros(n_pts,nF,n_pts);
     h = zeros(n_pts*NN.sizes(end),n_pts);
     deltaX2 = (max(X(:,3)) - min(X(:,3)) + 2*extra_f2)/n_pts;
     for i = 1:n_pts 
