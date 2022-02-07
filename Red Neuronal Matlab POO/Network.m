@@ -1,50 +1,38 @@
-%% Class for Network
-
 classdef Network < handle
-   properties (Access = public)  
+ 
+    properties (Access = public)  
       thetaOpt
       thetaOpt_m
       neuronsPerLayer
-      transfer_fcn
-   end
-   properties (Access = private)
-      num_layers
-   end
+      nLayers
+    end
 
    methods (Access = public)
-       function obj = Network(Net_Structure,fcn)
+
+       function obj = Network(Net_Structure)
            obj.neuronsPerLayer = Net_Structure;
-           obj.num_layers = length(Net_Structure);
-           obj.transfer_fcn = fcn;
+           obj.nLayers = length(Net_Structure);
        end
 
        function h = compute_last_H(obj,X,th_m)
             %thetamat = obj.thetavec_to_thetamat(obj.thetaOpt);
             h = obj.hypothesisfunction(X,th_m.(th_m.name{1}));
             g = sigmoid(h);
-            for i = 2:obj.num_layers
+            for i = 2:obj.nLayers
                 h = obj.hypothesisfunction(g,th_m.(th_m.name{i}));
                 g = sigmoid(h);
             end
        end
 
-       function h = hypothesisfunction(obj,X,theta)
-           if strcmp(obj.transfer_fcn,'linear')
-                h = X*theta;
-           elseif strcmp(obj.transfer_fcn,'linear+1')
-                h = X*theta + 1;
-           end
-       end
-
-       function plotBoundary(obj,data,th_m) 
-           X = data.Xfull;
+       function plotBoundary(obj,data,th_m,nFigure) 
+           X = data.Xtrain;
            nF = size(X,2);
            nPL = obj.neuronsPerLayer;
            n_pts = 30;
            graphzoom = 10;
            [x1, x2] = obj.createMesh(X,n_pts,graphzoom);
            h = obj.computeHeights(x1,x2,n_pts,nF,th_m);
-           figure
+           figure(nFigure)
            subplot(3,3,[1,2,3,4,5,6])
            data.plotdata();
            colors = ['b','g','r','c','m','y','k'];
@@ -102,5 +90,13 @@ classdef Network < handle
            end
        end
    end
+
+    methods (Access = private, Static)
+       
+        function h = hypothesisfunction(X,theta)
+          h = X*theta;
+        end
+        
+    end   
    
 end

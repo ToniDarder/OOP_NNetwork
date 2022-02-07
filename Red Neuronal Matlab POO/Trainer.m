@@ -1,49 +1,48 @@
-%% Trainer class
-
 classdef Trainer < handle
-    properties (Access = public)
-        lambda
-        transfer_fcn
-    end
 
     properties (Access = private)        
-        theta0
-        Xdata
-        Ydata        
-        numData
-        numFeatures
-        nLayers
-        neuronsPerLayer
+        theta0    
+    end
+
+    properties (Access = private)
+       lambda 
+       network
+       data
+       isDisplayed
     end
 
     methods (Access = public)
-        function obj = Trainer(l,fcn)
-            obj.lambda = l;
-            obj.transfer_fcn = fcn;                   
-        end
 
-        function train(obj,nn,data,showgraph)
-           obj.neuronsPerLayer = nn.neuronsPerLayer;
-           obj.Xdata       = data.Xfull;
-           obj.Ydata       = data.Yfull;
-           obj.numData     = data.numData;
-           obj.numFeatures = data.numFeatures;
-           obj.nLayers     = length(obj.neuronsPerLayer);
+        function obj = Trainer(s)
+           obj.init(s);
+        end
+        
+        function train(obj)
+           nn = obj.network;
+           d  = obj.data;
            obj.computeinitialtheta();     
-           nn.thetaOpt = obj.solveTheta(showgraph,data,nn);
+           nn.thetaOpt = obj.solveTheta(d,nn);
            nn.thetaOpt_m = obj.thetavec_to_thetamat(nn.thetaOpt);
         end
+
     end    
 
     methods (Access = private)
 
-        function theta = solveTheta(obj,isDisplayed,data,nn)
+        function init(obj,s)
+            obj.lambda      = s.lambda;
+            obj.network     = s.network;
+            obj.data        = s.data;
+            obj.isDisplayed = s.isDisplayed;
+        end
+
+        function theta = solveTheta(obj,data,nn)
                 opt = optimoptions(@fminunc);
                 opt.SpecifyObjectiveGradient = true;
                 opt.Algorithm = 'quasi-newton';
                 opt.StepTolerance = 10^-6;
                 opt.MaxFunctionEvaluations = 3000;              
-           if isDisplayed == true
+           if obj.isDisplayed == true
                 opt.Display = 'iter';
                 opt.CheckGradients = true;
                 opt.OutputFcn = @(theta,optimvalues,state)obj.myoutput(theta,optimvalues,state,data,nn);
@@ -68,14 +67,15 @@ classdef Trainer < handle
                     iter = optimvalues.iteration;
                     f = optimvalues.fval;
                     [c,~] = obj.computeLossFunction(theta);
-                    r = obj.computeRegularizationTerm(theta)*obj.lambda;                                     
-                    if mod(iter,10) == 0                       
-                        v = 0:10:iter;
+                    r = obj.computeRegularizationTerm(theta)*obj.lambda; 
+                    nIter = 1;
+                    if mod(iter,nIter) == 0                       
+                        v = 0:nIter:iter;
                         hist_Cost = [hist_Cost(1,:), f;
                                      hist_Cost(2,:), c;
                                      hist_Cost(3,:), r];
                         figure(optfig)
-                        plot(v,hist_Cost(1,2:end),'dr',v,hist_Cost(2,2:end),'db',v,hist_Cost(3,2:end),'dg')
+                        plot(v,hist_Cost(1,2:end),'+-r',v,hist_Cost(2,2:end),'+-b',v,hist_Cost(3,2:end),'+-k')
                         legend('Fval','Loss','Regularization')
                         xlabel('Iterations')
                         ylabel('Function Values')
@@ -83,8 +83,10 @@ classdef Trainer < handle
                     end
                     if mod(iter,25) == 0
                         th_m = obj.thetavec_to_thetamat(theta);
-                        figure(bound_ev)
-                        PlotBoundary(data,nn,th_m)  
+                        nFigure = bound_ev;
+                        figure(nFigure);
+                        obj.network.plotBoundary(data,th_m,nFigure)
+                        %PlotBoundary  
                     end
                 case 'done'
             end
@@ -114,7 +116,7 @@ classdef Trainer < handle
        end
        
        function grad = backwardprop(obj,a,y,theta)  
-            nTh = length(theta);
+            nT = length(theta);
             nL = obj.nLayers;
             th_m = obj.thetavec_to_thetamat(theta);
             delta = create_delta(obj,a,y);
@@ -125,27 +127,28 @@ classdef Trainer < handle
        end
        
        function computeinitialtheta(obj)
-           nL  = obj.neuronsPerLayer;
-           nF = obj.numFeatures;
-           nLayer = length(nL);
-           nTheta = nF*nL(1);
+           nPL = obj.network.neuronsPerLayer;
+           nF = obj.data.nFeatures;
+           nLayer = obj.network.nLayers;
+           nTheta = nF*nPL(1);
            for i = 2:nLayer
-                nTheta = nTheta + nL(i-1)*nL(i);
+                nTheta = nTheta + nPL(i-1)*nPL(i);
            end
            obj.theta0 = zeros(1,nTheta);
        end
        
        function th_m = thetavec_to_thetamat(obj,thetavec)
-           nL = obj.neuronsPerLayer;
-           nF = obj.numFeatures;
-           th_m.name = genvarname(repmat({'l'},1,length(nL)),'l');
-           last = nL(1)*nF;
-           aux = reshape(thetavec(1:last),[nF,nL(1)]);
+           nL = obj.network.nLayers;
+           nPL = obj.network.neuronsPerLayer;
+           nF = obj.data.nFeatures;
+           th_m.name = genvarname(repmat({'l'},1,nL),'l');
+           last = nPL(1)*nF;
+           aux = reshape(thetavec(1:last),[nF,nPL(1)]);
            th_m.(th_m.name{1}) = aux;
-           for i = 2:length(nL)
-               aux = reshape(thetavec(last+1:(last+nL(i)*nL(i-1))),[nL(i-1),nL(i)]);
+           for i = 2:nL
+               aux = reshape(thetavec(last+1:(last+nPL(i)*nPL(i-1))),[nPL(i-1),nPL(i)]);
                th_m.(th_m.name{i}) = aux;
-               last = last+nL(i)*nL(i-1);
+               last = last+nPL(i)*nPL(i-1);
            end
        end  
        
@@ -153,11 +156,11 @@ classdef Trainer < handle
            thetamat = obj.thetavec_to_thetamat(theta);
            a = obj.computeActivationFCN(thetamat);
            g = a.(a.name{end});
-           y = obj.Ydata;
-           nL = obj.neuronsPerLayer;
-           nD = obj.numData;
+           y =  obj.data.Ytrain;
+           nPL = obj.data.numLabels;
+           nD = obj.data.nData;
            J = 0;
-           for i = 1:nL(end)
+           for i = 1:nPL
                err1 = (1-y(:,i)).*(-log(1-g(:,i)));
                err0 = y(:,i).*(-log(g(:,i)));
                j = (1/nD)*sum(err1+err0);
@@ -166,13 +169,13 @@ classdef Trainer < handle
        end
 
        function r = computeRegularizationTerm(obj,theta)
-           nD = obj.numData;
+           nD = obj.data.nData;
            r = 0.5/nD*(theta*theta');
        end
 
        function a = computeActivationFCN(obj,th)
-           x  = obj.Xdata;
-           nL = obj.nLayers;
+           x  = obj.data.Xtrain;
+           nL = obj.network.nLayers;
            a.name = genvarname(repmat({'l'},1,nL+1),'l');
            a.(a.name{1}) = x;
            for i = 1:nL
@@ -184,7 +187,7 @@ classdef Trainer < handle
        end
 
        function delta = create_delta(obj,a,y)
-            nL = obj.nLayers;
+            nL = obj.network.nLayers;
             delta.name = genvarname(repmat({'l'},1,nL+1),'l');
             delta.(delta.name{end}) = a.(a.name{end}) - y;
        end
@@ -216,12 +219,13 @@ classdef Trainer < handle
             last = last - size(grad_i,1)*size(grad_i,2);
        end
 
-       function h = hypothesisfunction(obj,X,theta)
-           if strcmp(obj.transfer_fcn,'linear')
-                h = X*theta;
-           elseif strcmp(obj.transfer_fcn,'linear+1')
-                h = X*theta + 1;
-           end
-       end
+    end
+
+    methods (Access = private, Static)
+       
+        function h = hypothesisfunction(X,theta)
+          h = X*theta;
+        end
+
     end
 end

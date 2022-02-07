@@ -19,12 +19,17 @@ pol_deg = 1;                                                        % Polinomial
 
 data1 = Data(file,testratio,pol_deg);
 net_structure = [3,data1.numLabels];      
-mynet_iris = Network(net_structure,'linear');
-linear_trainer = Trainer(lambda,'linear');
+network = Network(net_structure);
+s.lambda      = lambda;
+s.network     = network;
+s.data        = data1;
+s.isDisplayed = true;
+linearTrainer = Trainer(s);
 % data1.var_corrmatrix();
 
 %% Train the networks and plot boundaries
 showgraph = true;
-linear_trainer.train(mynet_iris,data1,showgraph);
-mynet_iris.plotBoundary(data1,mynet_iris.thetaOpt_m);
+linearTrainer.train();
+nFigure = 100;
+network.plotBoundary(data1,network.thetaOpt_m,nFigure);
 

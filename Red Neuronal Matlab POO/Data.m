@@ -1,35 +1,36 @@
-%% Class for data objects, stores Xdata and Ydata matrices and has methods to Split Train-Test, Compute Xfull...
-% The input has to be a matrix .csv/.mat ..., where the columns are the features and the
-% last one being the labels for the groups numbered (1,2,3,...)
 classdef Data < handle
+
     properties (Access = public)
-        Xfullfeat
-        Xdata
-        Ydata
-        Xfull
-        Yfull       
+        Xtrain
+        Ytrain       
         Xtest
         Ytest
-        numData
-        numFeatures
+        nData
+        nFeatures
         numLabels
-        testPercentage
-        polyGrade       
     end
+
     properties (Access = private)
-        Xtrain
-        Ytrain
+        Xfullfeat        
+        X
+        Y
+        Xdata
+        Ydata    
+        testPercentage
+        polyGrade          
     end
+
+
     methods (Access = public)
         function obj = Data(File_Name,TP,d)
             obj.loadData(File_Name);
-            obj.numData = size(obj.Xdata,1);
+            obj.nData = size(obj.Xdata,1);
             obj.testPercentage = TP;
             obj.polyGrade = d;
             obj.numLabels = size(obj.Ydata,2);
             obj.splitdata()
-            obj.computefullvars(obj.Xtrain,obj.polyGrade)
-            obj.numFeatures = size(obj.Xfull,2);
+            obj.computefullvars(obj.X,obj.polyGrade)
+            obj.nFeatures = size(obj.Xtrain,2);
         end
 
         function plotdata(obj)
@@ -90,14 +91,14 @@ classdef Data < handle
         
         function splitdata(obj)
             % Shuffles the data and splits data in train and test
-            nD = obj.numData;
+            nD = obj.nData;
             TP = obj.testPercentage;
             r = randperm(nD);
             ntest = round(TP/100*nD);
             ntrain = nD - ntest;
-            obj.Xtrain = obj.Xdata(r(1:ntrain),:);
+            obj.X = obj.Xdata(r(1:ntrain),:);
             obj.Xtest = obj.Xdata(r((ntrain + 1):end),:);
-            obj.Ytrain = obj.Ydata(r(1:ntrain),:);
+            obj.Y = obj.Ydata(r(1:ntrain),:);
             obj.Ytest = obj.Ydata(r((ntrain + 1):end),:);
         end
 
@@ -112,8 +113,8 @@ classdef Data < handle
                        cont = cont+1;
                 end
             end
-            obj.Xfull = Xful;
-            obj.Yfull = obj.Ytrain;
+            obj.Xtrain = Xful;
+            obj.Ytrain = obj.Y;
         end
        
     end
