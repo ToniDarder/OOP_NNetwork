@@ -30,17 +30,14 @@ classdef Trainer < handle
            obj.numFeatures = data.numFeatures;
            obj.nLayers     = length(obj.neuronsPerLayer);
            obj.computeinitialtheta();     
-           thOpt_v = obj.solveTheta(showgraph);
-           thOpt_m = obj.thetavec_to_thetamat(thOpt_v);
-           nn.thetaOpt = thOpt_v;
-           nn.thetaOpt_m = thOpt_m;
+           nn.thetaOpt = obj.solveTheta(showgraph,data,nn);
+           nn.thetaOpt_m = obj.thetavec_to_thetamat(nn.thetaOpt);
         end
-    end
-    
+    end    
 
     methods (Access = private)
 
-        function theta = solveTheta(obj,isDisplayed)
+        function theta = solveTheta(obj,isDisplayed,data,nn)
                 opt = optimoptions(@fminunc);
                 opt.SpecifyObjectiveGradient = true;
                 opt.Algorithm = 'quasi-newton';
@@ -49,30 +46,30 @@ classdef Trainer < handle
            if isDisplayed == true
                 opt.Display = 'iter';
                 opt.CheckGradients = true;
-                opt.OutputFcn = @obj.myoutput;
+                opt.OutputFcn = @(theta,optimvalues,state)obj.myoutput(theta,optimvalues,state,data,nn);
            end
 
            F = @(theta) obj.computeCost(theta);     
            theta = fminunc(F,obj.theta0,opt); 
         end
 
-        function stop = myoutput(obj,theta,optimvalues,state)
-            persistent optfig hist_Cost Thistory
+        function stop = myoutput(obj,theta,optimvalues,state,data,nn)
+            persistent optfig bound_ev hist_Cost Thistory
             stop = false;  
             switch state
                 case 'init'
                     Thistory = [];
                     hist_Cost = [0;0;0];
                     optfig = figure;
+                    bound_ev = figure;
                     
                 case 'iter'
                     Thistory = [Thistory, theta];
                     iter = optimvalues.iteration;
                     f = optimvalues.fval;
                     [c,~] = obj.computeLossFunction(theta);
-                    r = obj.computeRegularizationTerm(theta)*obj.lambda;
-                    if mod(iter,10) == 0
-%                       PlotBoundary(obj.Xdata,NN)
+                    r = obj.computeRegularizationTerm(theta)*obj.lambda;                                     
+                    if mod(iter,10) == 0                       
                         v = 0:10:iter;
                         hist_Cost = [hist_Cost(1,:), f;
                                      hist_Cost(2,:), c;
@@ -83,6 +80,11 @@ classdef Trainer < handle
                         xlabel('Iterations')
                         ylabel('Function Values')
                         drawnow
+                    end
+                    if mod(iter,25) == 0
+                        th_m = obj.thetavec_to_thetamat(theta);
+                        figure(bound_ev)
+                        PlotBoundary(data,nn,th_m)  
                     end
                 case 'done'
             end

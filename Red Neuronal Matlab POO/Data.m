@@ -71,7 +71,8 @@ classdef Data < handle
         function loadData(obj,FN)
             f = fullfile('Datasets', FN);
             data = load(f);
-            x = data(:, [3 4]);
+            feat = input('Features to be used: ');
+            x = data(:, feat);
             ydata = data(:, end);
             y = zeros(length(ydata),max(ydata));
             u = unique(ydata);

@@ -18,13 +18,12 @@ classdef Network < handle
            obj.transfer_fcn = fcn;
        end
 
-       function h = compute_last_H(obj,X)
+       function h = compute_last_H(obj,X,th_m)
             %thetamat = obj.thetavec_to_thetamat(obj.thetaOpt);
-            tOpt = obj.thetaOpt_m;
-            h = obj.hypothesisfunction(X,tOpt.(tOpt.name{1}));
+            h = obj.hypothesisfunction(X,th_m.(th_m.name{1}));
             g = sigmoid(h);
             for i = 2:obj.num_layers
-                h = obj.hypothesisfunction(g,tOpt.(tOpt.name{i}));
+                h = obj.hypothesisfunction(g,th_m.(th_m.name{i}));
                 g = sigmoid(h);
             end
        end
@@ -37,27 +36,27 @@ classdef Network < handle
            end
        end
 
-       function plotBoundary(obj,data) 
+       function plotBoundary(obj,data,th_m) 
            X = data.Xfull;
            nF = size(X,2);
            nPL = obj.neuronsPerLayer;
            n_pts = 30;
            graphzoom = 10;
            [x1, x2] = obj.createMesh(X,n_pts,graphzoom);
-           h = obj.computeHeights(x1,x2,n_pts,nF);
+           h = obj.computeHeights(x1,x2,n_pts,nF,th_m);
            figure
            subplot(3,3,[1,2,3,4,5,6])
            data.plotdata();
-           colors = ['r','g','b','c','m','y','k'];
+           colors = ['b','g','r','c','m','y','k'];
            C = x1*x2';
            for i = 1:nPL(end)
                hold on
-               contour(x1,x2,h(:,:,i)',[0 0],'color',colors(i))
+               contour(x1,x2,h(:,:,end+1-i)',[0 0],'color',colors(i))
                title('Contour 0')
            end
            for i = 1:nPL(end)
                subplot(3,3,i+6)                           
-               surf(x1,x2,h(:,:,i),C)
+               surf(x1,x2,h(:,:,end+1-i),C)
                txt = ['3D Surface  ',colors(i)];  
                title(txt)
            end
@@ -86,7 +85,7 @@ classdef Network < handle
            x2 = linspace(min(X(:,3))-extra_f2,max(X(:,3))+extra_f2,n_pts)';
        end
 
-       function h_3D = computeHeights(obj,x1,x2,n_pts,nF)
+       function h_3D = computeHeights(obj,x1,x2,n_pts,nF,th_m)
            nPL = obj.neuronsPerLayer;
            X_test = zeros(n_pts,nF,n_pts);
            h = zeros(n_pts*nPL(end),n_pts);
@@ -96,7 +95,7 @@ classdef Network < handle
                b = ones(n_pts,1);
                xdata_test = [b, x1 , x2_aux];
                X_test(:,:,i) = xdata_test;
-               h(:,i) = reshape(obj.compute_last_H(X_test(:,:,i)),[n_pts*nPL(end),1]);
+               h(:,i) = reshape(obj.compute_last_H(X_test(:,:,i),th_m),[n_pts*nPL(end),1]);
            end
            for j = 1:nPL(end)
                h_3D(:,:,j) = h((j-1)*n_pts+1:j*n_pts,:);
