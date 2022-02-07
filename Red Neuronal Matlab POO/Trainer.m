@@ -8,13 +8,12 @@ classdef Trainer < handle
 
     properties (Access = private)        
         theta0
-        hist_Cost
-        numData
         Xdata
-        Ydata
-        neuronsPerLayer
+        Ydata        
+        numData
         numFeatures
         nLayers
+        neuronsPerLayer
     end
 
     methods (Access = public)
@@ -23,23 +22,22 @@ classdef Trainer < handle
             obj.transfer_fcn = fcn;                   
         end
 
-        function [tOpt_v,tOpt_m] = train(obj,nn,data,showgraph)
-           obj.neuronsPerLayer = nn.sizes;
+        function train(obj,nn,data,showgraph)
+           obj.neuronsPerLayer = nn.neuronsPerLayer;
            obj.Xdata       = data.Xfull;
            obj.Ydata       = data.Yfull;
-           obj.numData     = size(obj.Ydata ,1);
-           obj.numFeatures = size(obj.Xdata,2);
+           obj.numData     = data.numData;
+           obj.numFeatures = data.numFeatures;
            obj.nLayers     = length(obj.neuronsPerLayer);
            obj.computeinitialtheta();     
-           tOpt_v = obj.solveTheta(showgraph);
-           tOpt_m = obj.thetavec_to_thetamat(tOpt_v);
+           nn.thetaOpt = obj.solveTheta(showgraph,data,nn);
+           nn.thetaOpt_m = obj.thetavec_to_thetamat(nn.thetaOpt);
         end
-    end
-    
+    end    
 
     methods (Access = private)
 
-        function theta = solveTheta(obj,isDisplayed)
+        function theta = solveTheta(obj,isDisplayed,data,nn)
                 opt = optimoptions(@fminunc);
                 opt.SpecifyObjectiveGradient = true;
                 opt.Algorithm = 'quasi-newton';
@@ -48,57 +46,64 @@ classdef Trainer < handle
            if isDisplayed == true
                 opt.Display = 'iter';
                 opt.CheckGradients = true;
-                opt.OutputFcn = @obj.myoutput;
-                %opt = optimoptions(@fminunc,'SpecifyObjectiveGradient',true,'Display','iter','Algorithm','quasi-newton','StepTolerance',10^(-6),'MaxFunEvals',3000,'CheckGradients',true,'OutputFcn',@obj.myoutput);             
-                %opt = optimoptions(@fminunc,'Algorithm','quasi-newton','StepTolerance',10^(-6),'MaxFunEvals',1000);
+                opt.OutputFcn = @(theta,optimvalues,state)obj.myoutput(theta,optimvalues,state,data,nn);
            end
+
            F = @(theta) obj.computeCost(theta);     
            theta = fminunc(F,obj.theta0,opt); 
-           figure
-           f = obj.hist_Cost(1,2:end);
-           c = obj.hist_Cost(2,2:end);
-           r = obj.hist_Cost(3,2:end)*obj.lambda;
-           v = 2:size(obj.hist_Cost,2);
-           plot(v,f,'dr',v,c,'db',v,r,'dg')
-           legend('Fval','Loss','Regularization')
         end
 
-        function stop = myoutput(obj,theta,optimvalues,state)
+        function stop = myoutput(obj,theta,optimvalues,state,data,nn)
+            persistent optfig bound_ev hist_Cost Thistory
             stop = false;  
-            iter = optimvalues.iteration;
-            if isequal(state,'init')
-%               Thistory = [];
-              obj.hist_Cost = [0;0;0];
-            end        
-            if isequal(state,'iter')
-%               Thistory = [Thistory, x];
-              f = optimvalues.fval;
-              [c,~] = obj.computeLossFunction(theta);
-               r = obj.computeRegularizationTerm(theta);
- 
-%               if mod(iter,10) == 0
-%                 PlotBoundary(data,NN)
-%               end
-              obj.hist_Cost = [obj.hist_Cost(1,:), f;
-                               obj.hist_Cost(2,:), c;
-                               obj.hist_Cost(3,:), r];
+            switch state
+                case 'init'
+                    Thistory = [];
+                    hist_Cost = [0;0;0];
+                    optfig = figure;
+                    bound_ev = figure;
+                    
+                case 'iter'
+                    Thistory = [Thistory, theta];
+                    iter = optimvalues.iteration;
+                    f = optimvalues.fval;
+                    [c,~] = obj.computeLossFunction(theta);
+                    r = obj.computeRegularizationTerm(theta)*obj.lambda;                                     
+                    if mod(iter,10) == 0                       
+                        v = 0:10:iter;
+                        hist_Cost = [hist_Cost(1,:), f;
+                                     hist_Cost(2,:), c;
+                                     hist_Cost(3,:), r];
+                        figure(optfig)
+                        plot(v,hist_Cost(1,2:end),'dr',v,hist_Cost(2,2:end),'db',v,hist_Cost(3,2:end),'dg')
+                        legend('Fval','Loss','Regularization')
+                        xlabel('Iterations')
+                        ylabel('Function Values')
+                        drawnow
+                    end
+                    if mod(iter,25) == 0
+                        th_m = obj.thetavec_to_thetamat(theta);
+                        figure(bound_ev)
+                        PlotBoundary(data,nn,th_m)  
+                    end
+                case 'done'
             end
         end
 
-        function [j_auto,grad_auto] = computeCost(obj,theta)
-%            [a, J,loss] = obj.forwardprop(x,y,theta,sizes,numfeat);
-%             grad = obj.backwardprop(a,y,theta,sizes,numfeat);
+        function [j_adiff,g_adiff] = computeCost(obj,theta)
+           % [a, J,loss] = obj.forwardprop(x,y,theta,sizes,numfeat);
+           % grad = obj.backwardprop(a,y,theta,sizes,numfeat);
 
-            theta_dl = dlarray(theta);
-            J_dl = @(theta) obj.f_autodiff(theta);
-            [j_auto,grad_auto] = dlfeval(J_dl,theta_dl);
-            grad_auto = extractdata(grad_auto);   
-            j_auto = extractdata(j_auto); 
+            th = dlarray(theta);
+            J = @(theta) obj.f_adiff(theta);
+            [j_adiff,g_adiff] = dlfeval(J,th);
+            g_adiff = extractdata(g_adiff);   
+            j_adiff = extractdata(j_adiff); 
         end
         
-        function [J,dF_dtheta] = f_autodiff(obj,theta)
+        function [J,grad] = f_adiff(obj,theta)
             [~,J] = obj.forwardprop(theta);
-            dF_dtheta = dlgradient(J,theta);
+            grad = dlgradient(J,theta);
         end
 
         function [a, J] = forwardprop(obj,theta)
@@ -108,13 +113,14 @@ classdef Trainer < handle
             J = c + l*r;
        end
        
-       function grad = backwardprop(obj,a,y,theta,sizes,numfeat)  
-            len = length(theta);
-            thetamat = obj.thetavec_to_thetamat(theta,sizes,numfeat);
-            delta = create_delta(obj,sizes,a,y);
-            [grad,last] = obj.create_gradient(y,a,delta,thetamat,len);
-            for i = length(sizes):-1:2
-                [grad,delta,last] = obj.save_gradient_i(grad,thetamat,delta,a,y,i,last);
+       function grad = backwardprop(obj,a,y,theta)  
+            nTh = length(theta);
+            nL = obj.nLayers;
+            th_m = obj.thetavec_to_thetamat(theta);
+            delta = create_delta(obj,a,y);
+            [grad,last] = obj.create_gradient(y,a,delta,theta);
+            for i = nL:-1:2
+                [grad,delta,last] = obj.save_gradient_i(grad,th_m,delta,a,y,i,last);
             end
        end
        
@@ -129,44 +135,26 @@ classdef Trainer < handle
            obj.theta0 = zeros(1,nTheta);
        end
        
-       function thetamat = thetavec_to_thetamat(obj,thetavec)
+       function th_m = thetavec_to_thetamat(obj,thetavec)
            nL = obj.neuronsPerLayer;
            nF = obj.numFeatures;
-           thetamat.name = genvarname(repmat({'l'},1,length(nL)),'l');
+           th_m.name = genvarname(repmat({'l'},1,length(nL)),'l');
            last = nL(1)*nF;
            aux = reshape(thetavec(1:last),[nF,nL(1)]);
-           thetamat.(thetamat.name{1}) = aux;
+           th_m.(th_m.name{1}) = aux;
            for i = 2:length(nL)
                aux = reshape(thetavec(last+1:(last+nL(i)*nL(i-1))),[nL(i-1),nL(i)]);
-               thetamat.(thetamat.name{i}) = aux;
+               th_m.(th_m.name{i}) = aux;
                last = last+nL(i)*nL(i-1);
            end
        end  
        
-       function a = create_activation_fcn(obj)
-            x  = obj.Xdata;
-            nL = obj.neuronsPerLayer;
-            a.name = genvarname(repmat({'l'},1,length(nL)+1),'l');
-            a.(a.name{1}) = x;
-       end
-
-       function a = save_activation_fcn_i(obj,a,th,i)
-           gOld = a.(a.name{i});
-           h = obj.hypothesisfunction(gOld,th.(th.name{i}));
-           g = sigmoid(h);
-           a.(a.name{i+1}) = g;
-       end
-
        function [J,a] = computeLossFunction(obj,theta)
-            thetamat = obj.thetavec_to_thetamat(theta);            
-            a = obj.create_activation_fcn();
-            for i = 1:obj.nLayers
-                a = obj.save_activation_fcn_i(a,thetamat,i);
-            end
-            g = a.(a.name{end});
-
+           thetamat = obj.thetavec_to_thetamat(theta);
+           a = obj.computeActivationFCN(thetamat);
+           g = a.(a.name{end});
            y = obj.Ydata;
-           nL = obj.neuronsPerLayer;           
+           nL = obj.neuronsPerLayer;
            nD = obj.numData;
            J = 0;
            for i = 1:nL(end)
@@ -177,26 +165,41 @@ classdef Trainer < handle
            end
        end
 
-
        function r = computeRegularizationTerm(obj,theta)
            nD = obj.numData;
            r = 0.5/nD*(theta*theta');
        end
 
-       function delta = create_delta(obj,sizes,a,y)
-            delta.name = genvarname(repmat({'l'},1,length(sizes)+1),'l');
+       function a = computeActivationFCN(obj,th)
+           x  = obj.Xdata;
+           nL = obj.nLayers;
+           a.name = genvarname(repmat({'l'},1,nL+1),'l');
+           a.(a.name{1}) = x;
+           for i = 1:nL
+               g_prev = a.(a.name{i});
+               h = obj.hypothesisfunction(g_prev,th.(th.name{i}));
+               g = sigmoid(h);
+               a.(a.name{i+1}) = g;
+           end
+       end
+
+       function delta = create_delta(obj,a,y)
+            nL = obj.nLayers;
+            delta.name = genvarname(repmat({'l'},1,nL+1),'l');
             delta.(delta.name{end}) = a.(a.name{end}) - y;
        end
 
-       function [grad,last] = create_gradient(obj,y,a,delta,th,len)
-           grad = zeros(1,len);   
+       function [grad,last] = create_gradient(obj,y,a,delta,thetavec)
+           th = obj.thetavec_to_thetamat();
+           nTh = length(thetavec);
+           grad = zeros(1,nTh);   
            delta_e = delta.(delta.name{end});
            a_e1 = a.(a.name{end-1});
            th_e = th.(th.name{end});
-           aux = (1/length(y))*((delta_e'*a_e1)' + obj.lambda*th_e);
-           last = size(aux,1)*size(aux,2);
-           grad((end-last+1):end) = reshape(aux,[1,size(aux,1)*size(aux,2)]);
-           last = len - last;
+           grad_e = (1/length(y))*((delta_e'*a_e1)' + obj.lambda*th_e);
+           last = size(grad_e,1)*size(grad_e,2);
+           grad((end-last+1):end) = reshape(grad_e,[1,size(grad_e,1)*size(grad_e,2)]);
+           last = nTh - last;
        end
 
        function [grad,delta,last] = save_gradient_i(obj,grad,th,delta,a,y,i,last)
@@ -208,9 +211,9 @@ classdef Trainer < handle
 
             delta_i = (th_i*delta_i1')'.*(a_i.*(1 - a_i));
             delta.(delta.name{i}) = delta_i;
-            aux = (1/length(y))*((delta_i'*a_1i)' + obj.lambda*th_1i);
-            grad(last-size(aux,1)*size(aux,2)+1:last) = reshape(aux,[1,size(aux,1)*size(aux,2)]);
-            last = last - size(aux,1)*size(aux,2);
+            grad_i = (1/length(y))*((delta_i'*a_1i)' + obj.lambda*th_1i);
+            grad(last-size(grad_i,1)*size(grad_i,2)+1:last) = reshape(grad_i,[1,size(grad_i,1)*size(grad_i,2)]);
+            last = last - size(grad_i,1)*size(grad_i,2);
        end
 
        function h = hypothesisfunction(obj,X,theta)
