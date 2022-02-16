@@ -18,12 +18,13 @@ pol_deg = 1;                                                        % Polinomial
 % Initialize the objects (Data, Network, Trainer)
 
 data1 = Data(file,testratio,pol_deg);
-net_structure = [3,data1.numLabels];      
-network = Network(net_structure);
+net_structure = [3,data1.nLabels];      
 s.lambda      = lambda;
-s.network     = network;
 s.data        = data1;
 s.isDisplayed = true;
+s.Net_Structure = net_structure;
+network = Network(s);
+s.network     = network;
 linearTrainer = Trainer(s);
 % data1.var_corrmatrix();
 
@@ -31,5 +32,5 @@ linearTrainer = Trainer(s);
 showgraph = true;
 linearTrainer.train();
 nFigure = 100;
-network.plotBoundary(data1,network.thetaOpt_m,nFigure);
+network.plotBoundary(nFigure);
 

@@ -1,12 +1,17 @@
 clear;
 clc;
 load('IrisTest.mat');
-nn = Network([3],'linear');
-data1 = Data('iris.csv',0,1);
+irisData = Data('iris.csv',0,1);
+s.lambda      = 0;
+s.data        = irisData;
+s.isDisplayed = false;
+s.Net_Structure = [3];
+nn = Network(s);
+s.network     = nn;
 showgraph = false;
-linear_trainer = Trainer(0,'linear');
-linear_trainer.train(nn,data1,showgraph);
-Error = abs(nn.thetaOpt - mytest.thetaOpt);
+linear_trainer = Trainer(s);
+linear_trainer.train();
+Error = abs(nn.theta - network.theta);
 if Error < 5*10^(-2)
     disp('Test Passed');
 else
