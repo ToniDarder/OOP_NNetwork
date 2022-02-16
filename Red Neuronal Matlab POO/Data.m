@@ -7,17 +7,17 @@ classdef Data < handle
         Ytest
         nData
         nFeatures
-        numLabels
+        nLabels
     end
 
     properties (Access = private)
         Xfullfeat        
-        X
-        Y
         Xdata
         Ydata    
         testPercentage
-        polyGrade          
+        polyGrade    
+        X
+        Y
     end
 
 
@@ -27,7 +27,7 @@ classdef Data < handle
             obj.nData = size(obj.Xdata,1);
             obj.testPercentage = TP;
             obj.polyGrade = d;
-            obj.numLabels = size(obj.Ydata,2);
+            obj.nLabels = size(obj.Ydata,2);
             obj.splitdata()
             obj.computefullvars(obj.X,obj.polyGrade)
             obj.nFeatures = size(obj.Xtrain,2);
