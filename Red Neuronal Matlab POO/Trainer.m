@@ -15,8 +15,7 @@ classdef Trainer < handle
         function train(obj)
            nn = obj.network;
            nn.theta = obj.solveTheta(nn);
-        end
-
+        end    
     end    
 
     methods (Access = private)
@@ -49,8 +48,8 @@ classdef Trainer < handle
                     Thistory = [Thistory, theta];
                     iter = optimvalues.iteration;
                     f = optimvalues.fval;
-                    [c,~] = obj.network.computeLossFunction(theta);
-                    r = obj.network.computeRegularizationTerm(theta)*obj.network.lambda; 
+                    c = obj.network.computeLoss(theta);
+                    r = obj.network.computeRegularization(theta)*obj.network.lambda; 
                     nIter = 1;
                     if mod(iter,nIter) == 0                       
                         v = 0:nIter:iter;
