@@ -28,8 +28,7 @@ s.network     = network;
 linearTrainer = Trainer(s);
 % data1.var_corrmatrix();
 
-%% Train the networks and plot boundaries
-showgraph = true;
+%% Train the networks and plot boundariesshowgraph = true;
 linearTrainer.train();
 nFigure = 100;
 network.plotBoundary(nFigure);

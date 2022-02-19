@@ -44,7 +44,7 @@ classdef Network < handle
        end
 
        function plotNetwork(obj)
-           obj.plotter.plotNetworkStatus();
+           obj.plotter.plotNetworkStatus(obj.theta_m);
        end
    end
 

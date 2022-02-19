@@ -51,20 +51,65 @@ classdef Plotter < handle
            end
         end
 
-        function plotNetworkStatus(self)
+        function plotNetworkStatus(self,th_m)      
             NPL = self.neuronsPerLayer;
             numLayers = length(NPL);
-            x_sep = 40;
+            neurons = cell(max(NPL),numLayers);
+            for i = 1:numLayers
+                if i == 1
+                    maxTH = max(th_m.(th_m.name{i})(:));
+                else
+                    if maxTH < max(th_m.(th_m.name{i})(:))
+                        maxTH = max(th_m.(th_m.name{i})(:));
+                    end
+                end
+            end
+            x_sep = 50;
             y_sep = 30;
             figure
-            xlim([-20 100])
-            ylim([-20 max(NPL)*y_sep-10])
+            xlim([-20 numLayers*x_sep-10])
+            ylim([-20 max(NPL)*y_sep+10])
+            set(gca,'XTick',[], 'YTick', [])
+            box on
             hold on
             for i = 1:numLayers
                 for j = 1:NPL(i)
-                    self.plotcircle((i-1)*x_sep,(j-1)*y_sep);
+                    if i == 1
+                        color = [1 0 0];
+                    elseif i == numLayers
+                        color = [0 0.45 0.74];
+                    else
+                        color = [1 .67 .14];
+                    end
+                    prop.cx = (i-1)*x_sep;
+                    prop.cy = (j-1)*y_sep;
+                    prop.color = color;
+                    prop.r = 10;
+                    circlei = Circle(prop);
+                    neurons{i,j} = circlei;
+                    circlei.plot();
                 end
             end
+            for i = 1:numLayers-1
+                for j = 1:NPL(i)
+                    neuronb = neurons{i,j};
+                    for k = 1:NPL(i+1)
+                        neuronf = neurons{i+1,k};
+                        wth = abs(th_m.(th_m.name{i+1})(j,k)/maxTH);
+                        lw = 3*wth;
+                        linecolor = [sin(wth*pi/2),.5,cos(wth*pi/2)];
+                        line([neuronb.fx,neuronf.bx],[neuronb.fy,neuronf.by],'Color',linecolor,'LineWidth',lw)
+                    end
+                end
+            end
+%             for i = 1:NPL(1)
+%                 hold on
+%                 neuroni = neurons{i,1};
+%                 v1 = [neuroni.bx-10,neuroni.by];
+%                 v2 = [neuroni.bx,neuroni.by];
+%                 dv = v2 - v1;
+%                 quiver(v1(1),v1(2),dv(1),dv(2),0)
+%             end
             hold off
         end
     end
@@ -86,15 +131,5 @@ classdef Plotter < handle
                h_3D(:,:,j) = h((j-1)*n_pts+1:j*n_pts,:);
            end
        end 
-    end
-
-    methods (Static)
-        function h = plotcircle(cx,cy)
-            r = 10;
-            th = 0:pi/100:2*pi;
-            xunit = r * cos(th) + cx;
-            yunit = r * sin(th) + cy;
-            h = plot(xunit, yunit);
-        end
     end
 end
