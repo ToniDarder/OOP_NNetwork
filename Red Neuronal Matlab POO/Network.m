@@ -1,13 +1,18 @@
 classdef Network < handle
  
-   properties (Access = public)  
+    properties (GetAccess = public, SetAccess = private)
+       theta0
        theta
        neuronsPerLayer
        nLayers
        lambda
        data
-   end
-
+       cost
+       gradient
+       regularization
+       loss
+    end
+    
    properties (Access = private)
        propagator
        plotter
@@ -20,23 +25,45 @@ classdef Network < handle
    methods (Access = public)
 
        function obj = Network(s)
-           obj.init(s)
+           obj.init(s);
+           obj.computeInitialTheta();
+       end
+
+       function computeInitialTheta(obj)
+           nPL    = obj.neuronsPerLayer;
+           nF     = obj.data.nFeatures;
+           nLayer = obj.nLayers;
+           nTheta = nF*nPL(1);
+           for i = 2:nLayer
+                nTheta = nTheta + nPL(i-1)*nPL(i);
+           end
+           obj.theta0 = zeros(1,nTheta);
        end
 
        function h = getOutput(obj,X)
             h = obj.propagator.compute_last_H(X,obj.theta_m);
        end
        
-       function [J,gradient] = computeCost(obj,theta)          
-            [J,gradient] = obj.propagator.propagate(theta); 
+       function computeCost(obj,theta) 
+%Here
+
+           obj.theta = theta;
+           [J,grad] = obj.propagator.propagate(theta); 
+           obj.computeLoss();
+           obj.computeRegularization();
+           obj.cost = J; 
+           obj.gradient = grad;
        end 
 
-       function J = computeLoss(obj,theta)
-           J = obj.propagator.computeLossFunction(theta);
+       function computeLoss(obj)
+           l = obj.propagator.computeLossFunction(obj.theta);
+           obj.loss = l;
         end
 
-        function r = computeRegularization(obj,theta)
-            r = obj.propagator.computeRegularizationTerm(theta);
+        function computeRegularization(obj)
+            r = obj.propagator.computeRegularizationTerm(obj.theta);
+            l = obj.lambda;
+            obj.regularization = r*l;
         end
 
        function plotBoundary(obj,nFigure) 

@@ -2,8 +2,11 @@ classdef Trainer < handle
 
     properties (Access = private) 
        network
-       isDisplayed
-       %theta0
+       isDisplayed   
+       cost
+       figureBoundary
+       figureCost
+       xIter
     end
 
     methods (Access = public)
@@ -13,8 +16,10 @@ classdef Trainer < handle
         end
         
         function train(obj)
-           nn = obj.network;
-           nn.theta = obj.solveTheta(nn);
+           opt = obj.setSolverOptions();
+           x0  = obj.network.theta0; 
+           F = @(theta) obj.costFunction(theta); 
+           fminunc(F,x0,opt); 
         end    
     end    
 
@@ -25,65 +30,51 @@ classdef Trainer < handle
             obj.isDisplayed = s.isDisplayed;
         end
 
-        function theta = solveTheta(obj,nn)
-           opt = obj.setSolverOptions();
-           nn.theta = obj.computeinitialtheta(); 
-           theta0 = nn.theta;
-           F = @(theta) nn.computeCost(theta); 
-           theta = fminunc(F,theta0,opt); 
-        end
-
-        function stop = myoutput(obj,theta,optimvalues,state,args)
-            persistent optfig bound_ev hist_Cost Thistory
-            stop = false;  
+        function stop = myoutput(obj,x,optimvalues,state,args)
+            stop = false;
             switch state
                 case 'init'
-                    Thistory = [];
-                    hist_Cost = [0;0;0];
-                    optfig = figure;
-                    bound_ev = figure;
-                    
+                    obj.cost = [0;0;0];
+                    obj.figureCost = figure;
+                    obj.figureBoundary = figure;                    
                 case 'iter'
-                    obj.network.theta = theta;
-                    Thistory = [Thistory, theta];
+                    obj.xIter = [obj.xIter, x];
+               %     obj.network.plot(iter);
+
+                 %   obj.network.theta = x;
                     iter = optimvalues.iteration;
-                    f = optimvalues.fval;
-                    c = obj.network.computeLoss(theta);
-                    r = obj.network.computeRegularization(theta)*obj.network.lambda; 
+                    f    = optimvalues.fval;
+                    r = obj.network.regularization;
+                    c = obj.network.loss;
                     nIter = 1;
                     if mod(iter,nIter) == 0                       
                         v = 0:nIter:iter;
-                        hist_Cost = [hist_Cost(1,:), f;
-                                     hist_Cost(2,:), c;
-                                     hist_Cost(3,:), r];
-                        figure(optfig)
-                        plot(v,hist_Cost(1,2:end),'+-r',v,hist_Cost(2,2:end),'+-b',v,hist_Cost(3,2:end),'+-k')
+                        obj.cost = [obj.cost(1,:), f;
+                                    obj.cost(2,:), c;
+                                    obj.cost(3,:), r];
+                        figure(obj.figureCost)
+                        plot(v,obj.cost(1,2:end),'+-r',v,obj.cost(2,2:end),'+-b',v,obj.cost(3,2:end),'+-k')
                         legend('Fval','Loss','Regularization')
                         xlabel('Iterations')
                         ylabel('Function Values')
                         drawnow
                     end
                     if mod(iter,25) == 0
-                        nFigure = bound_ev;
-                        figure(nFigure);
-                        obj.network.plotBoundary(nFigure)
-                        %PlotBoundary  
+                        figure(obj.figureBoundary);
+                        obj.network.plotBoundary(obj.figureBoundary)
                     end
                 case 'done'
             end
         end
-       
-       function theta0 = computeinitialtheta(obj)
-           nPL = obj.network.neuronsPerLayer;
-           nF = obj.network.data.nFeatures;
-           nLayer = obj.network.nLayers;
-           nTheta = nF*nPL(1);
-           for i = 2:nLayer
-                nTheta = nTheta + nPL(i-1)*nPL(i);
-           end
-           theta0 = zeros(1,nTheta);
-       end
 
+        function [J,g] = costFunction(obj,x)
+            theta = x;
+            net   = obj.network;
+            net.computeCost(theta)
+            J = net.cost;
+            g = net.gradient; 
+        end
+       
        function opt = setSolverOptions(obj)
            opt = optimoptions(@fminunc);
            opt.SpecifyObjectiveGradient = true;

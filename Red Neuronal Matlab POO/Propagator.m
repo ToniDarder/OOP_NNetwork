@@ -14,6 +14,8 @@ classdef Propagator < handle
     
     methods (Access = public)
 
+     % Here
+
         function self = Propagator(init)
             self.data = init.data;
             self.lambda = init.lambda;

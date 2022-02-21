@@ -11,6 +11,8 @@ classdef Plotter < handle
 
     methods (Access = public)
 
+        %HERE
+
         function self = Plotter(init,P)
             self.data = init.data;
             self.neuronsPerLayer = init.Net_Structure;
