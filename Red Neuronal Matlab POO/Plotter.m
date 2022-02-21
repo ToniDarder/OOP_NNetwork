@@ -97,7 +97,8 @@ classdef Plotter < handle
                         neuronf = neurons{i+1,k};
                         wth = abs(th_m.(th_m.name{i+1})(j,k)/maxTH);
                         lw = 3*wth;
-                        linecolor = [sin(wth*pi/2),.5,cos(wth*pi/2)];
+                        %linecolor = [sin(wth*pi/2),.5,cos(wth*pi/2)];
+                        linecolor = [0 , 0, 1];
                         line([neuronb.fx,neuronf.bx],[neuronb.fy,neuronf.by],'Color',linecolor,'LineWidth',lw)
                     end
                 end

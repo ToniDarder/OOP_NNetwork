@@ -43,7 +43,7 @@ classdef Network < handle
            obj.plotter.plotBoundary(nFigure,obj.theta_m);
        end
 
-       function plotNetwork(obj)
+       function plotConections(obj)
            obj.plotter.plotNetworkStatus(obj.theta_m);
        end
    end
