@@ -8,7 +8,7 @@ clc;
 lambdavec = linspace(1*10^-3,5*10^-2,10);
 %lambda = lambdavec(6);
 %lambda = 3.3*10^-4; % [3,3]
-lambda = 3.3*10^-4;
+lambda = 3.3*10^-2;
 
 datasets = ["iris.csv", "SteelPlateFaults_datax27y1n1941.csv","SteelPlateFaults_datax27y1n700_2345.csv"];     % List of Datasets 
 file = datasets(1);                                                 % Selected dataset
