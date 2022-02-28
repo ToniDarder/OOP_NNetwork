@@ -7,6 +7,7 @@ classdef Trainer < handle
        figureBoundary
        figureCost
        xIter
+       delta
     end
 
     methods (Access = public)
@@ -20,6 +21,7 @@ classdef Trainer < handle
            x0  = obj.network.theta0; 
            F = @(theta) obj.costFunction(theta); 
            fminunc(F,x0,opt); 
+           %obj.StochasticGradientDescent(F,x0,opt);
         end    
     end    
 
@@ -28,6 +30,44 @@ classdef Trainer < handle
         function init(obj,s)
             obj.network     = s.network;
             obj.isDisplayed = s.isDisplayed;
+            obj.delta = 10^-4;
+        end
+
+        function StochasticGradientDescent(obj,F,x0,opt)
+            d   = obj.delta;    
+            iter = -1; 
+            [f,grad] = F(x0);
+            epsilon = [];
+            gnorm = norm(grad,2);
+            while gnorm > d
+                if iter == -1
+                    x = x0;
+                    state = 'init';           
+                else
+                    state = 'iter';
+                end
+                fOld = f; gradOld = grad; epsilonOld = epsilon;
+                epsilon = obj.lineSearchLR(x,grad,F);
+                deltaX = epsilon*grad;
+                x = x - deltaX;
+                [f,grad] = F(x);
+%                 if f >= fOld
+%                     f = fOld; epsilon = epsilonOld; grad = gradOld;
+%                 end
+                gnorm = norm(grad,2);
+                if obj.isDisplayed == true                    
+                    formatstr = ' %5.0f       %5.0f    %13.6g  %13.6g   %12.3g\n';
+                    if mod(iter,20) == 0
+                        fprintf(['                                                        First-order \n', ...
+                            ' Iteration  Func-count       f(x)        Step-size       optimality\n']);
+                    end
+                    fprintf(formatstr,iter,iter,f,epsilon,gnorm);
+                    optimvalues.iteration = iter;
+                    optimvalues.fval = f;
+                    stop = opt.OutputFcn(x,optimvalues,state);
+                end
+                iter = iter + 1;
+            end 
         end
 
         function stop = myoutput(obj,x,optimvalues,state,args)
@@ -39,9 +79,7 @@ classdef Trainer < handle
                     obj.figureBoundary = figure;                    
                 case 'iter'
                     obj.xIter = [obj.xIter, x];
-               %     obj.network.plot(iter);
-
-                 %   obj.network.theta = x;
+                 %   obj.network.plot(iter);
                     iter = optimvalues.iteration;
                     f    = optimvalues.fval;
                     r = obj.network.regularization;
@@ -87,6 +125,21 @@ classdef Trainer < handle
                 opt.CheckGradients = true;
                 opt.OutputFcn = @(theta,optimvalues,state)obj.myoutput(theta,optimvalues,state,args);
            end
-       end            
+       end       
+    end
+
+    methods (Access = private,Static)
+        function e = lineSearchLR(x,g,F)
+            e = [linspace(0.01,1,10),linspace(2,10,9),linspace(20,100,9)];    % Learning Rate, set to small cte o do a linesearch
+            newg = zeros([length(e),length(x)]);
+            newx = x - e'.*g; 
+            j = zeros([1,length(e)]);
+                for i = 1:length(e)
+                    [j(i),newg(i,:)] = F(newx(i,:));
+                end
+                [M,I] = min(j);
+                e = e(I);
+                f = M;
+       end
     end
 end

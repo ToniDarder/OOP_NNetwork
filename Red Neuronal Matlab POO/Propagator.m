@@ -1,7 +1,10 @@
 classdef Propagator < handle
 
-    properties (Access = public)
-
+    properties (GetAccess = public, SetAccess = private)
+        regularization
+        loss
+        cost
+        gradient
     end
 
     properties (Access = private)
@@ -10,6 +13,7 @@ classdef Propagator < handle
         neuronsPerLayer
         nLayers
         a_fcn
+        network
     end
     
     methods (Access = public)
@@ -21,6 +25,7 @@ classdef Propagator < handle
             self.lambda = init.lambda;
             self.neuronsPerLayer = init.Net_Structure;
             self.nLayers = length(init.Net_Structure);
+            self.network = init.obj;
         end
 
         function [J,gradient] = propagate(self,theta)
@@ -29,29 +34,7 @@ classdef Propagator < handle
             [j_e,g_e] = dlfeval(j,th);
             gradient = extractdata(g_e);   
             J = extractdata(j_e); 
-        end
-        
-        function J = computeLossFunction(self,theta)
-           th_m = self.thetavec_to_thetamat(theta);
-           self.computeActivationFCN(th_m);
-           a = self.a_fcn;
-           g = a.(a.name{end});
-           y =  self.data.Ytrain;
-           nPL = self.data.nLabels;
-           nD = self.data.nData;
-           J = 0;
-           for i = 1:nPL
-               err1 = (1-y(:,i)).*(-log(1-g(:,i)));
-               err0 = y(:,i).*(-log(g(:,i)));
-               j = (1/nD)*sum(err1+err0);
-               J = J + j;
-           end
-       end
-
-       function r = computeRegularizationTerm(self,theta)
-           nD = self.data.nData;
-           r = 0.5/nD*(theta*theta');
-       end
+        end       
 
        function h = compute_last_H(self,X,th_m)
             h = self.hypothesisfunction(X,th_m.(th_m.name{1}));
@@ -81,18 +64,45 @@ classdef Propagator < handle
     methods (Access = private)
 
        function [J,grad] = f_adiff(self,theta)
-           J = self.forwardprop(theta);
+           self.forwardprop(theta);
+           J = self.cost;
            grad = dlgradient(J,theta);
            %grad = self.bacwardprop();
        end
 
-       function J = forwardprop(self,theta)
-           c = self.computeLossFunction(theta);
-           r = self.computeRegularizationTerm(theta);
+       function forwardprop(self,theta)
+           self.computeLossFunction(theta);
+           self.computeRegularizationTerm(theta);
+           c = self.loss;
+           r = self.regularization;
            l = self.lambda;
-           J = c + l*r;
+           self.cost = c + l*r;
        end
-       
+
+       function computeLossFunction(self,theta)
+           th_m = self.thetavec_to_thetamat(theta);
+           self.computeActivationFCN(th_m);
+           a = self.a_fcn;
+           g = a.(a.name{end});
+           y =  self.data.Ytrain;
+           nPL = self.data.nLabels;
+           nD = self.data.nData;
+           J = 0;
+           for i = 1:nPL
+               err1 = (1-y(:,i)).*(-log(1-g(:,i)));
+               err0 = y(:,i).*(-log(g(:,i)));
+               j = (1/nD)*sum(err1+err0);
+               J = J + j;
+           end
+           self.loss = J;
+       end
+
+       function computeRegularizationTerm(self,theta)
+           nD = self.data.nData;
+           r = 0.5/nD*(theta*theta');
+           self.regularization = r;
+       end
+
        function computeActivationFCN(self,theta)
            x  = self.data.Xtrain;
            nL = self.nLayers;
@@ -107,27 +117,30 @@ classdef Propagator < handle
            self.a_fcn = a;
        end     
 
-       function grad = backwardprop(self,y,theta) 
-            a = self.a_fcn;
-            nL = self.nLayers;
+       function grad = backwardprop(self,theta) 
             th_m = self.thetavec_to_thetamat(theta);
+            a = self.a_fcn;
+            y = self.data.Ytrain;
+            nL = self.nLayers;      
             delta = create_delta(self,a,y);
-            [grad,last] = self.create_gradient(y,a,delta,theta);
+            [grad,last] = self.create_gradient(delta,theta);
             for i = nL:-1:2
-                [grad,delta,last] = self.save_gradient_i(grad,th_m,delta,a,y,i,last);
+                [grad,delta,last] = self.save_gradient_i(grad,th_m,delta,i,last);
             end
        end           
 
-       function delta = create_delta(self,y)
+       function delta = create_delta(self)
             a = self.a_fcn;
+            y = self.data.Ytrain;
             nL = self.nLayers;
             delta.name = genvarname(repmat({'l'},1,nL+1),'l');
             delta.(delta.name{end}) = a.(a.name{end}) - y;
        end
 
-       function [grad,last] = create_gradient(self,y,delta,theta)
+       function [grad,last] = create_gradient(self,delta,theta)
            th_m = self.thetavec_to_thetamat(theta);
            a = self.a_fcn;
+           y = self.data.Ytrain;
            nTh = length(theta);
            grad = zeros(1,nTh);   
            delta_e = delta.(delta.name{end});
@@ -139,14 +152,14 @@ classdef Propagator < handle
            last = nTh - last;
        end
 
-       function [grad,delta,last] = save_gradient_i(self,grad,th,delta,y,i,last)
+       function [grad,delta,last] = save_gradient_i(self,grad,th,delta,i,last)
             a = self.a_fcn; 
+            y = self.data.Ytrain;
             th_i = th.(th.name{i});
             th_1i = th.(th.name{i-1});
             a_i = a.(a.name{i});
             a_1i = a.(a.name{i-1});        
             delta_i1 = delta.(delta.name{i+1});
-
             delta_i = (th_i*delta_i1')'.*(a_i.*(1 - a_i));
             delta.(delta.name{i}) = delta_i;
             grad_i = (1/length(y))*((delta_i'*a_1i)' + self.lambda*th_1i);
