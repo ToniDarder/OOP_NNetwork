@@ -45,8 +45,7 @@ classdef Network < handle
        end
        
        function computeCost(obj,theta) 
-%Here
-
+           %Here
            obj.theta = theta;
            [J,grad] = obj.propagator.propagate(theta); 
            obj.computeLoss();
@@ -56,14 +55,14 @@ classdef Network < handle
        end 
 
        function computeLoss(obj)
-           l = obj.propagator.computeLossFunction(obj.theta);
-           obj.loss = l;
+           l = obj.propagator.loss;
+           obj.loss = extractdata(l);
         end
 
         function computeRegularization(obj)
-            r = obj.propagator.computeRegularizationTerm(obj.theta);
+            r = obj.propagator.regularization;
             l = obj.lambda;
-            obj.regularization = r*l;
+            obj.regularization = extractdata(r*l);
         end
 
        function plotBoundary(obj,nFigure) 
@@ -82,6 +81,7 @@ classdef Network < handle
            obj.nLayers = length(s.Net_Structure);
            obj.data = s.data;
            obj.lambda = s.lambda;
+           s.obj = obj;
            obj.propagator = Propagator(s);
            obj.plotter = Plotter(s,obj.propagator);
        end              
