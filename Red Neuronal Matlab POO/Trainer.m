@@ -20,7 +20,7 @@ classdef Trainer < handle
            opt = obj.setSolverOptions();
            x0  = obj.network.theta0; 
            F = @(theta) obj.costFunction(theta); 
-           fminunc(F,x0,opt); 
+           %fminunc(F,x0,opt); 
            obj.StochasticGradientDescent(F,x0,opt);
         end    
     end    
@@ -36,38 +36,48 @@ classdef Trainer < handle
         function StochasticGradientDescent(obj,F,x0,opt)
             d   = obj.delta;    
             iter = -1; 
-            [f,grad] = F(x0);
-            epsilon = [];
+            [f,grad] = F(x0);            
+            epsilon = 1e-1;
             gnorm = norm(grad,2);
-            while gnorm > d
+            while gnorm > d                
                 if iter == -1
                     x = x0;
                     state = 'init';           
                 else
                     state = 'iter';
                 end
-                fOld = f; gradOld = grad; epsilonOld = epsilon;
-                epsilon = obj.lineSearchLR(x,grad,F);
-                deltaX = epsilon*grad;
-                x = x - deltaX;
                 [f,grad] = F(x);
+                fOld = f; gradOld = grad; epsilonOld = epsilon;
+                
+               % epsilon = obj.lineSearchLR(x,grad,F);
+                while f >= fOld                                    
+                    xnew = x - epsilon*grad;
+                    [f,~] = F(xnew);
+                    epsilon = epsilon/2;
 %                 if f >= fOld
 %                     f = fOld; epsilon = epsilonOld; grad = gradOld;
 %                 end
-                gnorm = norm(grad,2);
-                if obj.isDisplayed == true                    
-                    formatstr = ' %5.0f       %5.0f    %13.6g  %13.6g   %12.3g\n';
-                    if mod(iter,20) == 0
-                        fprintf(['                                                        First-order \n', ...
-                            ' Iteration  Func-count       f(x)        Step-size       optimality\n']);
-                    end
-                    fprintf(formatstr,iter,iter,f,epsilon,gnorm);
-                    optimvalues.iteration = iter;
-                    optimvalues.fval = f;
-                    stop = opt.OutputFcn(x,optimvalues,state);
                 end
+                x = xnew;
+                epsilon = 10*epsilon;
+                gnorm = norm(grad,2);
+                obj.printValues(iter,x,f,epsilon,gnorm,state,opt);
                 iter = iter + 1;
             end 
+        end
+
+        function printValues(obj,iter,x,f,epsilon,gnorm,state,opt)
+            if obj.isDisplayed == true
+                formatstr = ' %5.0f       %5.0f    %13.6g  %13.6g   %12.3g\n';
+                if mod(iter,20) == 0
+                    fprintf(['                                                        First-order \n', ...
+                        ' Iteration  Func-count       f(x)        Step-size       optimality\n']);
+                end
+                fprintf(formatstr,iter,iter,f,epsilon,gnorm);
+                optimvalues.iteration = iter;
+                optimvalues.fval = f;
+                stop = opt.OutputFcn(x,optimvalues,state);
+            end
         end
 
         function stop = myoutput(obj,x,optimvalues,state,args)
@@ -84,7 +94,7 @@ classdef Trainer < handle
                     f    = optimvalues.fval;
                     r = obj.network.regularization;
                     c = obj.network.loss;
-                    nIter = 1;
+                    nIter = 50;
                     if mod(iter,nIter) == 0                       
                         v = 0:nIter:iter;
                         obj.cost = [obj.cost(1,:), f;
@@ -97,7 +107,7 @@ classdef Trainer < handle
                         ylabel('Function Values')
                         drawnow
                     end
-                    if mod(iter,25) == 0
+                    if mod(iter,50) == 0
                         figure(obj.figureBoundary);
                         obj.network.plotBoundary(obj.figureBoundary)
                     end
