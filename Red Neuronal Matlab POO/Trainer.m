@@ -21,7 +21,7 @@ classdef Trainer < handle
            x0  = obj.network.theta0; 
            F = @(theta) obj.costFunction(theta); 
            fminunc(F,x0,opt); 
-           %obj.StochasticGradientDescent(F,x0,opt);
+           obj.StochasticGradientDescent(F,x0,opt);
         end    
     end    
 
