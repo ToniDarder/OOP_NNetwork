@@ -1,6 +1,6 @@
 classdef Trainer < handle
 
-    properties (Access = protected) 
+    properties (Access = public) 
        network
        isDisplayed   
        cost
@@ -16,6 +16,8 @@ classdef Trainer < handle
            switch s.type
                case 'SGD'
                    self = SGD_Optimizer(s);
+               case 'fmin'
+                   self = Fminunc_Optimizer(s);
            end
         end
         
@@ -30,70 +32,67 @@ classdef Trainer < handle
 
     methods (Access = protected)
 
-        function init(obj,s)
-            obj.network     = s.network;
-            obj.isDisplayed = s.isDisplayed;
-            obj.delta = 10^-4;
+        function init(self,s)
+            self.network     = s.network;
+            self.isDisplayed = s.isDisplayed;
+            self.delta = 10^-4;
         end
 
-        function stop = myoutput(obj,x,optimvalues,state,args)
+        function stop = myoutput(self,x,optimvalues,state,args)
             stop = false;
             switch state
                 case 'init'
-                    obj.cost = [0;0;0];
-                    obj.figureCost = figure;
-                    obj.figureBoundary = figure;                    
+                    self.cost = [0;0;0];
+                    self.figureCost = figure;
+                    self.figureBoundary = figure;                    
                 case 'iter'
-                    obj.xIter = [obj.xIter, x];
+                    self.xIter = [self.xIter, x];
                  %   obj.network.plot(iter);
                     iter = optimvalues.iteration;
                     f    = optimvalues.fval;
-                    r = obj.network.regularization;
-                    c = obj.network.loss;
+                    r = self.network.regularization;
+                    c = self.network.loss;
                     nIter = 100;
                     if mod(iter,nIter) == 0                       
                         v = 0:nIter:iter;
-                        obj.cost = [obj.cost(1,:), f;
-                                    obj.cost(2,:), c;
-                                    obj.cost(3,:), r];
-                        figure(obj.figureCost)
-                        plot(v,obj.cost(1,2:end),'+-r',v,obj.cost(2,2:end),'+-b',v,obj.cost(3,2:end),'+-k')
+                        self.cost = [self.cost(1,:), f;
+                                    self.cost(2,:), c;
+                                    self.cost(3,:), r];
+                        figure(self.figureCost)
+                        plot(v,self.cost(1,2:end),'+-r',v,self.cost(2,2:end),'+-b',v,self.cost(3,2:end),'+-k')
                         legend('Fval','Loss','Regularization')
                         xlabel('Iterations')
                         ylabel('Function Values')
                         drawnow
                     end
                     if mod(iter,nIter*5) == 0
-                        figure(obj.figureBoundary);
-                        obj.network.plotBoundary(obj.figureBoundary)
+                        figure(self.figureBoundary);
+                        self.network.plotBoundary(self.figureBoundary)
                     end
                 case 'done'
             end
         end
-    end
-    
-    methods (Access = protected)
 
-        function opt = setSolverOptions(obj)
+        function opt = setSolverOptions(self)
            opt = optimoptions(@fminunc);
            opt.SpecifyObjectiveGradient = true;
            opt.Algorithm = 'quasi-newton';
            opt.StepTolerance = 10^-6;
            opt.MaxFunctionEvaluations = 3000;              
-           if obj.isDisplayed == true
+           if self.isDisplayed == true
                 args = [];
                 opt.Display = 'iter';
                 opt.CheckGradients = true;
-                opt.OutputFcn = @(theta,optimvalues,state)obj.myoutput(theta,optimvalues,state,args);
+                opt.OutputFcn = @(theta,optimvalues,state)self.myoutput(theta,optimvalues,state,args);
            end
         end 
 
-        function [J,g] = costFunction(obj,x)
+        function [J,g] = costFunction(self,x)
             theta = x;
-            net   = obj.network;
+            net   = self.network;
             net.computeCost(theta)
             J = net.cost;
             g = net.gradient; 
-        end       
+        end  
     end
 end
