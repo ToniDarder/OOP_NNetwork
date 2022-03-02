@@ -5,19 +5,18 @@ clc;
 %Iris_Test;
 
 %% Initialization of parameters
-lambdavec = linspace(1*10^-3,5*10^-2,10);
-%lambda = lambdavec(6);
 %lambda = 3.3*10^-4; % [3,3]
-lambda = 3.3*10^-2;
+lambda = 3.3*10^-4;
 
-datasets = ["iris.csv", "SteelPlateFaults_datax27y1n1941.csv","SteelPlateFaults_datax27y1n700_2345.csv"];     % List of Datasets 
-file = datasets(1);                                                 % Selected dataset
-testratio = 0;                                                      % Percentage of data destined for testing
-pol_deg = 1;                                                        % Polinomial degree for feature combinations (1 = given features)   
+datasets = ["iris.csv", "SteelPlateFaults_datax27y1n1941.csv","SteelPlateFaults_datax27y1n700_2345.csv"];   
+file = datasets(1);                                                
+testratio = 0;                                                      
+pol_deg = 1;                                                          
 
-% Initialize the objects (Data, Network, Trainer)
+%% Initialize the objects (Data, Network, Trainer)
 
-data1 = Data(file,testratio,pol_deg);
+%data1 = Data(file,testratio,pol_deg);
+load("iris_33_goodmin_10e-4.mat");
 net_structure = [3,data1.nLabels];      
 s.lambda      = lambda;
 s.data        = data1;
@@ -25,11 +24,12 @@ s.isDisplayed = true;
 s.Net_Structure = net_structure;
 network = Network(s);
 s.network     = network;
-linearTrainer = Trainer(s);
+sgd_opt = SGD_Optimizer(s);
+fmin_opt = Fminunc_Optimizer(s);
 % data1.var_corrmatrix();
 
 %% Train the networks and plot boundaries showgraph = true;
-linearTrainer.train();
+sgd_opt.train();
 nFigure = 100;
 network.plotBoundary(nFigure);
 
