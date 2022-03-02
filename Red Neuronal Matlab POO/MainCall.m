@@ -25,7 +25,7 @@ s.Net_Structure = net_structure;
 network = Network(s);
 s.network     = network;
 s.type = 'SGD';
-sgd_opt = Trainer(s);
+sgd_opt = Trainer.create(s);
 fmin_opt = Fminunc_Optimizer(s);
 % data1.var_corrmatrix();
 

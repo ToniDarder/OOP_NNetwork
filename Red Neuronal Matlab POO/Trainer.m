@@ -10,14 +10,18 @@ classdef Trainer < handle
        delta
     end
 
-    methods (Access = public)
+    methods (Access = public, Static)
 
-        function self = Trainer(s)
+        function self = create(s)
            switch s.type
                case 'SGD'
                    self = SGD_Optimizer(s);
            end
         end
+
+    end
+
+   methods (Access = public)
         
         function train(self)
            opt = self.setSolverOptions();
