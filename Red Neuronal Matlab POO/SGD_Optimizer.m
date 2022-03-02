@@ -8,8 +8,9 @@ classdef SGD_Optimizer < Trainer
     end
 
     methods(Access = public)
+
         function self = SGD_Optimizer(s)
-            self@Trainer(s);  
+            self.init(s)
         end
         
         function train(self)
@@ -69,13 +70,4 @@ classdef SGD_Optimizer < Trainer
         
     end
     
-    methods (Access = protected)
-        function opt = setSolverOptions(self)
-            opt = setSolverOptions@Trainer(self);
-        end
-
-        function [J,g] = costFunction(self,theta)
-            [J,g] = costFunction@Trainer(self,theta);
-        end
-    end
 end

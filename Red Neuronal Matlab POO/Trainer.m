@@ -1,6 +1,6 @@
 classdef Trainer < handle
 
-    properties (Access = public) 
+    properties (Access = protected) 
        network
        isDisplayed   
        cost
@@ -13,7 +13,10 @@ classdef Trainer < handle
     methods (Access = public)
 
         function self = Trainer(s)
-           self.init(s);
+           switch s.type
+               case 'SGD'
+                   self = SGD_Optimizer(s);
+           end
         end
         
         function train(self)
@@ -25,7 +28,7 @@ classdef Trainer < handle
         end      
     end    
 
-    methods (Access = private)
+    methods (Access = protected)
 
         function init(obj,s)
             obj.network     = s.network;
