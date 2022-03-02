@@ -15,8 +15,8 @@ pol_deg = 1;
 
 %% Initialize the objects (Data, Network, Trainer)
 
-%data1 = Data(file,testratio,pol_deg);
-load("iris_33_goodmin_10e-4.mat");
+data1 = Data(file,testratio,pol_deg);
+%load("iris_33_goodmin_10e-4.mat");
 net_structure = [3,data1.nLabels];      
 s.lambda      = lambda;
 s.data        = data1;
@@ -24,7 +24,8 @@ s.isDisplayed = true;
 s.Net_Structure = net_structure;
 network = Network(s);
 s.network     = network;
-sgd_opt = SGD_Optimizer(s);
+s.type = 'SGD';
+sgd_opt = Trainer(s);
 fmin_opt = Fminunc_Optimizer(s);
 % data1.var_corrmatrix();
 
