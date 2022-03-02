@@ -9,7 +9,7 @@ classdef Fminunc_Optimizer < Trainer
 
     methods(Access = public)
         function self = Fminunc_Optimizer(s)
-            self@Trainer(s);
+            self.init(s);
         end
 
         function train(self)
