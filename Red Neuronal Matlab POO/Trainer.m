@@ -56,7 +56,7 @@ classdef Trainer < handle
                     f    = optimvalues.fval;
                     r = self.network.regularization;
                     c = self.network.loss;
-                    nIter = 100;
+                    nIter = 25;
                     if mod(iter,nIter) == 0                       
                         v = 0:nIter:iter;
                         self.cost = [self.cost(1,:), f;

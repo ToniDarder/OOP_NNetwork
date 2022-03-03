@@ -8,6 +8,7 @@ classdef Fminunc_Optimizer < Trainer
     end
 
     methods(Access = public)
+
         function self = Fminunc_Optimizer(s)
             self.init(s);
         end
@@ -20,9 +21,6 @@ classdef Fminunc_Optimizer < Trainer
         end
     end
 
-    methods(Access = private)
-
-    end
     methods (Access = protected)
         function opt = setSolverOptions(self)
             opt = setSolverOptions@Trainer(self);
