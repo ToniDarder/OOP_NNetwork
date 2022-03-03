@@ -15,8 +15,8 @@ pol_deg = 1;
 
 %% Initialize the objects (Data, Network, Trainer)
 
-data1 = Data(file,testratio,pol_deg);
-%load("iris_33_goodmin_10e-4.mat");
+%data1 = Data(file,testratio,pol_deg);
+load("iris_33_goodmin_10e-4.mat");
 net_structure = [3,data1.nLabels];      
 s.lambda      = lambda;
 s.data        = data1;
@@ -27,9 +27,10 @@ s.network     = network;
 s.type = 'SGD';
 sgd_opt = Trainer.create(s);
 fmin_opt = Fminunc_Optimizer(s);
-% data1.var_corrmatrix();
+
 
 %% Train the networks and plot boundaries showgraph = true;
+% data1.var_corrmatrix();
 sgd_opt.train();
 nFigure = 100;
 network.plotBoundary(nFigure);
