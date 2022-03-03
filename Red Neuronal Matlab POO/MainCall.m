@@ -27,7 +27,7 @@ s.network     = network;
 s.type = 'SGD';
 sgd_opt = Trainer.create(s);
 fmin_opt = Fminunc_Optimizer(s);
-
+% probando github desktop
 
 %% Train the networks and plot boundaries showgraph = true;
 % data1.var_corrmatrix();
