@@ -40,7 +40,7 @@ classdef Data < handle
             ylabel("X4");
         end
 
-        function var_corrmatrix(obj)
+        function drawCorrMatrix(obj)
             x = obj.Xfullfeat;
             y = obj.Ydata;
             nf = size(x,2);
@@ -63,6 +63,25 @@ classdef Data < handle
                         txt = ['X',num2str(j)];
                         xlabel(txt)
                     end                    
+                end
+            end
+        end
+
+        function drawCorrRow(obj,k)
+            x = obj.Xfullfeat;
+            y = obj.Ydata;
+            nf = size(x,2);
+            n = ceil(nf^0.5);
+            figure            
+            t = tiledlayout(n,n,'TileSpacing','Compact');
+            txt = ['Correlation with var',num2str(k)];
+            title(t,txt);
+            for i = 1:nf
+                nexttile(i)
+                if i == k
+                    histogram(x(:,i))
+                else
+                    gscatter(x(:,k),x(:,i),y,'bgrcmyk','xo*+.sd',[5 5 5],'off')
                 end
             end
         end
@@ -115,7 +134,6 @@ classdef Data < handle
             end
             obj.Xtrain = Xful;
             obj.Ytrain = obj.Y;
-        end
-       
+        end       
     end
 end

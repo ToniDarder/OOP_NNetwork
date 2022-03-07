@@ -30,7 +30,7 @@ classdef Plotter < handle
            figure(nFigure)
            subplot(3,3,[1,2,3,4,5,6])
            self.data.plotdata();
-           colors = ['b','g','r','c','m','y','k'];
+           colors = ['b','g','r','c','m','y','k','k'];
            C = x1*x2';
            for i = 1:nPL(end)
                hold on
@@ -55,30 +55,30 @@ classdef Plotter < handle
 
         function plotNetworkStatus(self,th_m)      
             NPL = self.neuronsPerLayer;
-            numLayers = length(NPL);
-            neurons = cell(max(NPL),numLayers);
-            for i = 1:numLayers
+            nLy = length(NPL);
+            neurons = cell(max(NPL),nLy);
+            for i = 1:nLy-1
                 if i == 1
-                    maxTH = max(th_m.(th_m.name{i})(:));
+                    maxTH = max(th_m{i}(:));
                 else
-                    if maxTH < max(th_m.(th_m.name{i})(:))
-                        maxTH = max(th_m.(th_m.name{i})(:));
+                    if maxTH < max(th_m{i}(:))
+                        maxTH = max(th_m{i}(:));
                     end
                 end
             end
             x_sep = 50;
             y_sep = 30;
             figure
-            xlim([-20 numLayers*x_sep-10])
+            xlim([-20 nLy*x_sep-10])
             ylim([-20 max(NPL)*y_sep+10])
             set(gca,'XTick',[], 'YTick', [])
             box on
             hold on
-            for i = 1:numLayers
+            for i = 1:nLy
                 for j = 1:NPL(i)
                     if i == 1
                         color = [1 0 0];
-                    elseif i == numLayers
+                    elseif i == nLy
                         color = [0 0.45 0.74];
                     else
                         color = [1 .67 .14];
@@ -92,12 +92,12 @@ classdef Plotter < handle
                     circlei.plot();
                 end
             end
-            for i = 1:numLayers-1
+            for i = 1:nLy-1
                 for j = 1:NPL(i)
                     neuronb = neurons{i,j};
                     for k = 1:NPL(i+1)
                         neuronf = neurons{i+1,k};
-                        wth = abs(th_m.(th_m.name{i+1})(j,k)/maxTH);
+                        wth = abs(th_m{i}(j,k)/maxTH);
                         lw = 3*wth;
                         %linecolor = [sin(wth*pi/2),.5,cos(wth*pi/2)];
                         linecolor = [0 , 0, 1];

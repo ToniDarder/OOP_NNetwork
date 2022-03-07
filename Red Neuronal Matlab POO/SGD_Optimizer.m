@@ -39,15 +39,9 @@ classdef SGD_Optimizer < Trainer
                 [f,grad] = F(x);
                 funcount = funcount + 1;
                 fOld = f;
-               % epsilon = obj.lineSearchLR(x,grad,F);
-                while f >= fOld                                    
-                    xnew = x - epsilon*grad;
-                    [f,~] = F(xnew);
-                    epsilon = epsilon/2;
-                    funcount = funcount + 1;
-                end
-                x = xnew;
-                epsilon = 40*epsilon;
+                [epsilon,x,funcount] = self.lineSearch(x,grad,F,fOld,epsilon,funcount);      
+                %[epsilon,x] = self.linSearchFm(x,grad,F,epsilon);                
+                epsilon = 10*epsilon;
                 gnorm = norm(grad,2);
                 self.printValues(iter,funcount,x,f,epsilon,gnorm,state,opt);
                 iter = iter + 1;
@@ -66,8 +60,25 @@ classdef SGD_Optimizer < Trainer
                 optimvalues.fval = f;
                 stop = opt.OutputFcn(x,optimvalues,state);
             end
-        end    
-        
+        end  
+
+        function [e,x,funcount] = lineSearch(self,x,grad,F,fOld,e,funcount)
+            f = fOld;
+            while f >= fOld - e*(grad*grad')
+                xnew = x - e*grad;
+                [f,~] = F(xnew);
+                e = e/2;
+                funcount = funcount + 1;         
+            end
+            x = xnew;
+        end     
+
+        function [e,x] = linSearchFm(self,x,grad,F,e)
+            xnew = @(e1) x - e1*grad;
+            f = @(e1) F(xnew(e1));
+            [e,c] = fminbnd(f,0.01,e);
+            x = xnew(e);
+        end
     end
     
 end

@@ -31,9 +31,8 @@ classdef Network < handle
 
        function computeInitialTheta(obj)
            nPL    = obj.neuronsPerLayer;
-           nF     = obj.data.nFeatures;
            nLayer = obj.nLayers;
-           nTheta = nF*nPL(1);
+           nTheta = 0;
            for i = 2:nLayer
                 nTheta = nTheta + nPL(i-1)*nPL(i);
            end
@@ -44,10 +43,11 @@ classdef Network < handle
             h = obj.propagator.compute_last_H(X,obj.theta_m);
        end
        
-       function computeCost(obj,theta) 
+       function computeCost(obj,theta,I) 
            %Here
            obj.theta = theta;
-           [J,grad] = obj.propagator.propagate(theta); 
+           
+           [J,grad] = obj.propagator.propagate(theta,I); 
            obj.computeLoss();
            obj.computeRegularization();
            obj.cost = J; 

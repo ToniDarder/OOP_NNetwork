@@ -1,6 +1,6 @@
 classdef Trainer < handle
 
-    properties (Access = public) 
+    properties (Access = protected) 
        network
        isDisplayed   
        cost
@@ -8,6 +8,7 @@ classdef Trainer < handle
        figureCost
        xIter
        delta
+       batchSize
     end
 
     methods (Access = public, Static)
@@ -18,9 +19,10 @@ classdef Trainer < handle
                    self = SGD_Optimizer(s);
                case 'fmin'
                    self = Fminunc_Optimizer(s);
+               case 'SGD_mom'
+                   self = SGD_mom_Optimizer(s);
            end
         end
-
     end
 
    methods (Access = public)
@@ -40,6 +42,7 @@ classdef Trainer < handle
             self.network     = s.network;
             self.isDisplayed = s.isDisplayed;
             self.delta = 10^-4;
+            self.batchSize = 150;
         end
 
         function stop = myoutput(self,x,optimvalues,state,args)
@@ -93,8 +96,9 @@ classdef Trainer < handle
 
         function [J,g] = costFunction(self,x)
             theta = x;
+            Ibatch = self.batchSize;
             net   = self.network;
-            net.computeCost(theta)
+            net.computeCost(theta,Ibatch)
             J = net.cost;
             g = net.gradient; 
         end  
