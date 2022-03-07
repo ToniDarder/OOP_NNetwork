@@ -11,7 +11,7 @@ lambda = 3.3*10^-4;
 datasets = load("datasets.mat").datasets; 
 disp('Datsets available:')
 disp(datasets)
-file = datasets(4);                                                
+file = datasets(1);                                                
 testratio = 0;                                                      
 pol_deg = 1;                                                          
 
@@ -43,4 +43,4 @@ network.plotBoundary(nFigure);
 
 
 % setSolverOptions in each Optimizer
-% 
+% try different lambdas for SGD
