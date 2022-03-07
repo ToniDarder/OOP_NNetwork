@@ -1,9 +1,11 @@
 classdef SGD_Optimizer < Trainer
+
     properties (Access = public)
 
     end
 
     properties (Access = private)
+       batchSize
 
     end
 
@@ -17,12 +19,13 @@ classdef SGD_Optimizer < Trainer
            opt = self.setSolverOptions();
            x0  = self.network.theta0; 
            F = @(theta) self.costFunction(theta); 
-           self.StochasticGradientDescent(F,x0,opt);
+           self.optimize(F,x0,opt);
         end     
     end
     
     methods(Access = private)
-        function StochasticGradientDescent(self,F,x0,opt)
+
+        function optimize(self,F,x0,opt)
             d   = self.delta;    
             iter = -1; 
             funcount = 0;
@@ -61,6 +64,15 @@ classdef SGD_Optimizer < Trainer
                 stop = opt.OutputFcn(x,optimvalues,state);
             end
         end  
+
+        function [J,g] = costFunction(self,x)
+            theta = x;
+            Ibatch = self.batchSize;
+            net   = self.network;
+            net.computeCost(theta,Ibatch)
+            J = net.cost;
+            g = net.gradient;
+        end
 
         function [e,x,funcount] = lineSearch(self,x,grad,F,fOld,e,funcount)
             f = fOld;

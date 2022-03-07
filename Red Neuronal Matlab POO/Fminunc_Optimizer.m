@@ -22,14 +22,21 @@ classdef Fminunc_Optimizer < Trainer
 
     methods(Access = private)
 
+        function [J,g] = costFunction(self,x)
+            theta = x;
+            Ibatch = self.batchSize;
+            net   = self.network;
+            net.computeCost(theta,Ibatch)
+            J = net.cost;
+            g = net.gradient; 
+        end          
+
     end
+    
     methods (Access = protected)
         function opt = setSolverOptions(self)
             opt = setSolverOptions@Trainer(self);
         end
 
-        function [J,g] = costFunction(self,theta)
-            [J,g] = costFunction@Trainer(self,theta);
-        end
     end
 end

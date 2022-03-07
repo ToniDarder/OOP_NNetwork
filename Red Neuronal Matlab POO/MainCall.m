@@ -41,3 +41,6 @@ sgd_opt.train();
 nFigure = 100;
 network.plotBoundary(nFigure);
 
+
+% setSolverOptions in each Optimizer
+% 

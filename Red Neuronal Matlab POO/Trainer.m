@@ -8,7 +8,6 @@ classdef Trainer < handle
        figureCost
        xIter
        delta
-       batchSize
     end
 
     methods (Access = public, Static)
@@ -24,17 +23,6 @@ classdef Trainer < handle
            end
         end
     end
-
-   methods (Access = public)
-        
-        function train(self)
-           opt = self.setSolverOptions();
-           x0  = self.network.theta0; 
-           F = @(theta) self.costFunction(theta); 
-           %fminunc(F,x0,opt); 
-           %obj.StochasticGradientDescent(F,x0,opt);
-        end      
-    end    
 
     methods (Access = protected)
 
@@ -54,7 +42,6 @@ classdef Trainer < handle
                     self.figureBoundary = figure;                    
                 case 'iter'
                     self.xIter = [self.xIter, x];
-                 %   obj.network.plot(iter);
                     iter = optimvalues.iteration;
                     f    = optimvalues.fval;
                     r = self.network.regularization;
@@ -94,13 +81,6 @@ classdef Trainer < handle
            end
         end 
 
-        function [J,g] = costFunction(self,x)
-            theta = x;
-            Ibatch = self.batchSize;
-            net   = self.network;
-            net.computeCost(theta,Ibatch)
-            J = net.cost;
-            g = net.gradient; 
-        end  
+
     end
 end
