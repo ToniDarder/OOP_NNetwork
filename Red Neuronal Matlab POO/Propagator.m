@@ -104,7 +104,6 @@ classdef Propagator < handle
        end
 
        function computeRegularizationTerm(self,theta)
-           nD = self.indexV;
            nD = self.Ibatch;
            r = 0.5/nD*(theta*theta');
            self.regularization = r;
