@@ -1,16 +1,15 @@
-classdef SGD_Optimizer < Trainer
-
+classdef SGD_mom_Optimizer < Trainer
     properties (Access = public)
 
     end
 
     properties (Access = private)
-       batchSize
+        batchSize
     end
 
     methods(Access = public)
 
-        function self = SGD_Optimizer(s)
+        function self = SGD_mom_Optimizer(s)
             self.init(s)
             self.batchSize = 150;
         end
@@ -24,13 +23,14 @@ classdef SGD_Optimizer < Trainer
     end
     
     methods(Access = private)
-
         function optimize(self,F,x0,opt)
             d   = self.delta;    
             iter = -1; 
             funcount = 0;
             [~,grad] = F(x0);            
-            epsilon = 1e-1;
+            epsilon = 10;
+            alpha = 0.5;
+            v = 0;
             gnorm = norm(grad,2);
             while gnorm > d                
                 if iter == -1
@@ -42,9 +42,14 @@ classdef SGD_Optimizer < Trainer
                 [f,grad] = F(x);
                 funcount = funcount + 1;
                 fOld = f;
-                [epsilon,x,funcount] = self.lineSearch(x,grad,F,fOld,epsilon,funcount);      
-                %[epsilon,x] = self.lineSearchFm(x,grad,F,epsilon);                
+                [epsilon,x,funcount,v] = self.lineSearch(x,grad,F,fOld,epsilon,v,alpha,funcount);      
+                %[epsilon,x] = self.linSearchFm(x,grad,F,epsilon);                
                 epsilon = 10*epsilon;
+                if alpha < 0.99
+                    if mod(iter,5) == 0
+                        alpha = alpha + 0.09;
+                    end
+                end
                 gnorm = norm(grad,2);
                 self.printValues(iter,funcount,x,f,epsilon,gnorm,state,opt);
                 iter = iter + 1;
@@ -65,18 +70,21 @@ classdef SGD_Optimizer < Trainer
             end
         end  
 
-        function [e,x,funcount] = lineSearch(self,x,grad,F,fOld,e,funcount)
+        function [e,x,funcount,v] = lineSearch(self,x,grad,F,fOld,e,v,a,funcount)
             f = fOld;
-            while f >= fOld - e*(grad*grad')
-                xnew = x - e*grad;
+            deltaFC = 0;
+            while f >= fOld && deltaFC < 10
+                v = a*v - e*grad;
+                xnew = x + v;
                 [f,~] = F(xnew);
                 e = e/2;
-                funcount = funcount + 1;         
+                deltaFC = deltaFC + 1;         
             end
+            funcount = funcount + deltaFC;
             x = xnew;
         end     
 
-        function [e,x] = lineSearchFm(self,x,grad,F,e)
+        function [e,x] = linSearchFm(self,x,grad,F,e)
             xnew = @(e1) x - e1*grad;
             f = @(e1) F(xnew(e1));
             [e,c] = fminbnd(f,0.01,e);
@@ -92,5 +100,6 @@ classdef SGD_Optimizer < Trainer
            end
         end 
     end
-    
+
+
 end

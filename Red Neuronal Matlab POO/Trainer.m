@@ -30,7 +30,15 @@ classdef Trainer < handle
             self.network     = s.network;
             self.isDisplayed = s.isDisplayed;
             self.delta = 10^-4;
-            self.batchSize = 150;
+        end
+
+        function [J,g] = costFunction(self,x,I)
+            theta = x;
+            Ibatch = I;
+            net   = self.network;
+            net.computeCost(theta,Ibatch)
+            J = net.cost;
+            g = net.gradient;
         end
 
         function stop = myoutput(self,x,optimvalues,state,args)
@@ -66,21 +74,6 @@ classdef Trainer < handle
                 case 'done'
             end
         end
-
-        function opt = setSolverOptions(self)
-           opt = optimoptions(@fminunc);
-           opt.SpecifyObjectiveGradient = true;
-           opt.Algorithm = 'quasi-newton';
-           opt.StepTolerance = 10^-6;
-           opt.MaxFunctionEvaluations = 3000;              
-           if self.isDisplayed == true
-                args = [];
-                opt.Display = 'iter';
-                opt.CheckGradients = true;
-                opt.OutputFcn = @(theta,optimvalues,state)self.myoutput(theta,optimvalues,state,args);
-           end
-        end 
-
 
     end
 end

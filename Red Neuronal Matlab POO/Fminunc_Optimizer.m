@@ -15,28 +15,25 @@ classdef Fminunc_Optimizer < Trainer
         function train(self)
             opt = self.setSolverOptions();
             x0  = self.network.theta0;
-            F = @(theta) self.costFunction(theta);
+            F = @(theta) self.costFunction(theta,0);
             fminunc(F,x0,opt); 
         end
     end
 
     methods(Access = private)
 
-        function [J,g] = costFunction(self,x)
-            theta = x;
-            Ibatch = self.batchSize;
-            net   = self.network;
-            net.computeCost(theta,Ibatch)
-            J = net.cost;
-            g = net.gradient; 
-        end          
-
-    end
-    
-    methods (Access = protected)
         function opt = setSolverOptions(self)
-            opt = setSolverOptions@Trainer(self);
-        end
-
+           opt = optimoptions(@fminunc);
+           opt.SpecifyObjectiveGradient = true;
+           opt.Algorithm = 'quasi-newton';
+           opt.StepTolerance = 10^-6;
+           opt.MaxFunctionEvaluations = 3000;              
+           if self.isDisplayed == true
+                args = [];
+                opt.Display = 'iter';
+                opt.CheckGradients = true;
+                opt.OutputFcn = @(theta,optimvalues,state)self.myoutput(theta,optimvalues,state,args);
+           end
+        end 
     end
 end

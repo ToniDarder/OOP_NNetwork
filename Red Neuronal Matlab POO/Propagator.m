@@ -16,7 +16,6 @@ classdef Propagator < handle
         network
         nData
         Ibatch
-        indexV
     end
     
     methods (Access = public)
@@ -33,8 +32,11 @@ classdef Propagator < handle
         end
 
         function [J,gradient] = propagate(self,theta,I)
-            self.Ibatch = I;
-            self.indexV = self.Ibatch;
+            if I == 0
+                self.Ibatch = length(self.data.Ytrain);
+            else
+                self.Ibatch = I;
+            end
             th = dlarray(theta);
             j = @(theta) self.f_adiff(theta);
             [j_e,g_e] = dlfeval(j,th);
@@ -86,7 +88,7 @@ classdef Propagator < handle
            th_m = self.thetavec_to_thetamat(theta);
            self.computeActivationFCN(th_m);
            a = self.a_fcn;
-           I = self.indexV;
+           I = self.Ibatch;
            g = a{end}(1:I,:);
            y =  self.data.Ytrain(1:I,:);
            nLb = self.data.nLabels;
@@ -103,13 +105,14 @@ classdef Propagator < handle
 
        function computeRegularizationTerm(self,theta)
            nD = self.indexV;
+           nD = self.Ibatch;
            r = 0.5/nD*(theta*theta');
            self.regularization = r;
        end
 
        function computeActivationFCN(self,theta)
            x  = self.data.Xtrain;
-           I = self.indexV;
+           I = self.Ibatch;
            nLy = self.nLayers;
            a = cell(nLy,1);
            a{1} = x(1:I,:);

@@ -17,9 +17,9 @@ pol_deg = 1;
 
 %% Initialize the objects (Data, Network, Trainer)
 
-data1 = Data(file,testratio,pol_deg);
-%load("iris_33_goodmin_10e-4.mat");
-net_structure = [data1.nFeatures,3,2,3,data1.nLabels];      
+%data1 = Data(file,testratio,pol_deg);
+load("iris_33_goodmin_10e-4.mat");
+net_structure = [data1.nFeatures,3,data1.nLabels];      
 s.lambda      = lambda;
 s.data        = data1;
 s.isDisplayed = true;
