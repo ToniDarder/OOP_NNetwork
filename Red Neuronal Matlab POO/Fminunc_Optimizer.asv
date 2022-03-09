@@ -10,10 +10,10 @@ classdef Fminunc_Optimizer < Trainer
     methods(Access = public)
         function self = Fminunc_Optimizer(s)
             self.init(s);
-            opt = self.setSolverOptions();
         end
 
         function train(self)
+            opt = self.setSolverOptions();
             x0  = self.network.theta0;
             F = @(theta) self.costFunction(theta,0);
             fminunc(F,x0,opt); 
@@ -38,10 +38,31 @@ classdef Fminunc_Optimizer < Trainer
 
         function stop = myoutput(self,x,optimvalues,state,args)
             stop = false;
-            f = optimvalues.fval;
-            iter = optimvalues.iteration;
-            self.storeValues(x,f,state);
-            self.plotMinimization(iter);                                
+            switch state
+                case 'init'
+                    
+                case 'iter'
+                    f = optimvalues.fval;
+                    self.storeValues(x,f,state);
+                    %self.plot();
+                    iter = optimvalues.iteration;
+                    
+                    nIter = 100;
+                    if mod(iter,nIter) == 0
+                        v = 0:nIter:iter;   
+                        figure(self.figureCost)
+                        plot(v,self.costHist(2:end,1),'+-r',v,self.costHist(2:end,2),'+-b',v,self.costHist(2:end,3),'+-k')
+                        legend('Fval','Loss','Regularization')
+                        xlabel('Iterations')
+                        ylabel('Function Values')
+                        drawnow
+                    end
+                    if mod(iter,nIter*5) == 0
+                        figure(self.figureBoundary);
+                        self.network.plotBoundary(self.figureBoundary)
+                    end
+                case 'done'
+            end
         end
     end
 end
