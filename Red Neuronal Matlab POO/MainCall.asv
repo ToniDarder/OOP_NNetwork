@@ -49,5 +49,5 @@ network.plotBoundary(nFigure);
 % try one layer
 % try more feautures in iris and see if gradient is still converging slow
 % study regularization related with overfitting
-% give tolerance line search
+% give toler
 % Plot cost,lineSearch (hbar),OptimalityCritera in subPlot for SGD and fmincon

@@ -67,7 +67,8 @@ classdef SGD_Optimizer < Trainer
 
         function [e,x,funcount] = lineSearch(self,x,grad,F,fOld,e,funcount)
             f = fOld;
-            while f >= fOld - e*(grad*grad')
+            xnew = x;
+            while f >= 1.1*(fOld - e*(grad*grad'))
                 xnew = x - e*grad;
                 [f,~] = F(xnew);
                 e = e/2;

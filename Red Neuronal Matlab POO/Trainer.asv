@@ -41,11 +41,6 @@ classdef Trainer < handle
             g = net.gradient;
         end
 
-        %function storeValue
-        % function plot()
-
-        % No more print
-
         function stop = myoutput(self,x,optimvalues,state,args)
             stop = false;
             switch state
@@ -56,7 +51,6 @@ classdef Trainer < handle
                 case 'iter'
                     %obj.storeValue()
                     %obj.plot();
-
                     self.xIter = [self.xIter, x];
                     iter = optimvalues.iteration;
                     f    = optimvalues.fval;

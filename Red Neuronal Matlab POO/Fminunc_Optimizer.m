@@ -35,5 +35,8 @@ classdef Fminunc_Optimizer < Trainer
                 opt.OutputFcn = @(theta,optimvalues,state)self.myoutput(theta,optimvalues,state,args);
            end
         end 
+            
+        % myOutpue
+        
     end
 end
