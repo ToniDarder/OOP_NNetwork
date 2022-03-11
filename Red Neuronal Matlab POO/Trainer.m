@@ -1,8 +1,12 @@
 classdef Trainer < handle
 
+    properties (Access = public)
+        isDisplayed
+    end
+    
     properties (Access = protected) 
        network
-       isDisplayed   
+          
        costHist
        figureBoundary
        figureCost

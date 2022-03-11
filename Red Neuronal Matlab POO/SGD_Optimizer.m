@@ -51,8 +51,8 @@ classdef SGD_Optimizer < Trainer
         end
 
         function displayIter(self,iter,funcount,x,f,epsilon,gnorm,state)
-            self.printValues(funcount,epsilon,gnorm,f,iter)
             if self.isDisplayed == true
+                self.printValues(funcount,epsilon,gnorm,f,iter)
                 self.storeValues(x,f,state);
                 self.plotMinimization(iter);
             end
@@ -65,7 +65,7 @@ classdef SGD_Optimizer < Trainer
                 case 'dynamic'
                     f = fOld;
                     xnew = x;
-                    while f >= 1.1*(fOld - e*(grad*grad'))
+                    while f >= 1*(fOld - e*(grad*grad'))
                         xnew = x - e*grad;
                         [f,~] = F(xnew);
                         e = e/2;
@@ -84,7 +84,7 @@ classdef SGD_Optimizer < Trainer
         function setSolverOptions(self)
            self.learningRate = 10^-2;
            self.batchSize = 150;
-           self.MaxFunctionEvaluations = 5000;    
+           self.MaxFunctionEvaluations = 2000;    
            self.lSearchtype = 'dynamic';
         end 
 

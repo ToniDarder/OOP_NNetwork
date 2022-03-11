@@ -20,21 +20,12 @@ classdef Data < handle
         Y
     end
 
-
     methods (Access = public)
         function obj = Data(File_Name,TP,d)
-            obj.loadData(File_Name);
-            obj.nData = size(obj.Xdata,1);
-            obj.testPercentage = TP;
-            obj.polyGrade = d;
-            obj.nLabels = size(obj.Ydata,2);
-            obj.splitdata()
-            obj.computefullvars(obj.X,obj.polyGrade)
-            obj.nFeatures = size(obj.Xtrain,2);
+            obj.init(File_Name,TP,d)
         end
 
         function plotdata(obj)
-            % Plots all the data labeled by colour in one figure 
             gscatter(obj.Xdata(:,1),obj.Xdata(:,2),obj.Ydata,'bgrcmyk','xo*+.sd')
             xlabel("X3");
             ylabel("X4");
@@ -85,9 +76,32 @@ classdef Data < handle
                 end
             end
         end
+
+        function updateHyperparameter(obj,h)
+           switch h.type
+               case 'testPercentage'
+                   obj.testPercentage = h.value;
+                   obj.splitdata()
+               case 'polyGrade'
+                   obj.polyGrade = h.value;
+                   obj.computefullvars(obj.X,obj.polyGrade);
+           end
+       end
     end
 
     methods (Access = private)
+
+        function init(obj,File_Name,TP,d)
+            obj.loadData(File_Name);
+            obj.nData = size(obj.Xdata,1);
+            obj.testPercentage = TP;
+            obj.polyGrade = d;
+            obj.nLabels = size(obj.Ydata,2);
+            obj.splitdata()
+            obj.computefullvars(obj.X,d)
+            obj.nFeatures = size(obj.Xtrain,2);
+        end
+
         function loadData(obj,FN)
             f = fullfile('Datasets', FN);
             data = load(f);
@@ -126,7 +140,7 @@ classdef Data < handle
             x1 = x(:,1); 
             x2 = x(:,2);
             cont = 1;
-            for g = 0:d
+            for g = 1:d
                 for a = 0:g
                        Xful(:,cont) = x2.^(a).*x1.^(g-a);
                        cont = cont+1;
@@ -134,6 +148,6 @@ classdef Data < handle
             end
             obj.Xtrain = Xful;
             obj.Ytrain = obj.Y;
-        end       
+        end 
     end
 end

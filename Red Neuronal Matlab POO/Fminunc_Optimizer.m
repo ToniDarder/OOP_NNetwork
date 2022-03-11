@@ -10,10 +10,10 @@ classdef Fminunc_Optimizer < Trainer
     methods(Access = public)
         function self = Fminunc_Optimizer(s)
             self.init(s);
-            opt = self.setSolverOptions();
         end
 
         function train(self)
+            opt = self.setSolverOptions();
             x0  = self.network.theta0;
             F = @(theta) self.costFunction(theta,0);
             fminunc(F,x0,opt); 

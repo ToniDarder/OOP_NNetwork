@@ -1,6 +1,8 @@
 classdef Network < handle
  
     properties (GetAccess = public, SetAccess = private)
+       W
+       b
        theta0
        theta
        neuronsPerLayer
@@ -32,11 +34,15 @@ classdef Network < handle
        function computeInitialTheta(obj)
            nPL    = obj.neuronsPerLayer;
            nLayer = obj.nLayers;
-           nTheta = 0;
+           nW     = 0;
+           nb     = 0;
            for i = 2:nLayer
-                nTheta = nTheta + nPL(i-1)*nPL(i);
+                nW = nW + nPL(i-1)*nPL(i);
+                nb = nb + nPL(i);
            end
-           obj.theta0 = zeros(1,nTheta);
+           obj.W = zeros(1,nW);
+           obj.b = zeros(1,nb);
+           obj.theta0 = [obj.W,obj.b];
        end
 
        function h = getOutput(obj,X)
@@ -44,9 +50,8 @@ classdef Network < handle
        end
        
        function computeCost(obj,theta,I) 
-           %Here
            obj.theta = theta;
-           
+           [obj.W,obj.b] = obj.propagator.thetavec_to_thetamat(obj.theta);
            [J,grad] = obj.propagator.propagate(theta,I); 
            obj.computeLoss();
            obj.computeRegularization();
@@ -66,11 +71,19 @@ classdef Network < handle
         end
 
        function plotBoundary(obj,nFigure) 
-           obj.plotter.plotBoundary(nFigure,obj.theta_m);
+           obj.plotter.plotBoundary(nFigure,obj.W,obj.b);
        end
 
        function plotConections(obj)
-           obj.plotter.plotNetworkStatus(obj.theta_m);
+           obj.plotter.plotNetworkStatus(obj.W);
+       end
+
+       function updateHyperparameter(obj,h)
+           switch h.type
+               case 'lambda'
+                    obj.lambda = h.value;
+                    obj.propagator.lambda = obj.lambda;
+           end
        end
    end
 
@@ -84,15 +97,13 @@ classdef Network < handle
            s.obj = obj;
            obj.propagator = Propagator(s);
            obj.plotter = Plotter(s,obj.propagator);
-       end              
+       end  
    end
 
-    methods
-
+   methods
        function value = get.theta_m(obj)
-          value = obj.propagator.thetavec_to_thetamat(obj.theta);
+           value = obj.propagator.thetavec_to_thetamat(obj.theta);
        end
-
-    end
+   end
    
 end

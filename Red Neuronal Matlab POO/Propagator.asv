@@ -45,11 +45,11 @@ classdef Propagator < handle
             J = extractdata(j_e); 
         end       
 
-       function h = compute_last_H(self,X,W,b)
-            h = self.hypothesisfunction(X,W{1},b{1});
+       function h = compute_last_H(self,X,th_m)
+            h = self.hypothesisfunction(X,th_m{1});
             g = self.sigmoid(h);
             for i = 2:self.nLayers-1
-                h = self.hypothesisfunction(g,W{i},b{i});
+                h = self.hypothesisfunction(g,th_m{i});
                 g = self.sigmoid(h);
             end
        end
@@ -57,18 +57,16 @@ classdef Propagator < handle
        function [W_m,b_m] = thetavec_to_thetamat(self,thetavec)
            nL = self.nLayers;
            nPL = self.neuronsPerLayer;
-           Wvec = thetavec(1:end-sum(nPL(2:end)));
-           bvec = thetavec(end-sum(nPL(2:end))+1:end);
+           Wvec = thetavec(1:end-sum(nPL)+1);
+           bvec = thetavec(end-sum(nPL)+1,end);
            W_m = cell(nL-1,1);
            b_m = cell(nL-1,1);
-           lastW = 0;
-           lastb = 0;
+           last = 0;
            for i = 2:nL
-               aux = reshape(Wvec(lastW+1:(lastW+nPL(i)*nPL(i-1))),[nPL(i-1),nPL(i)]);
+               aux = reshape(Wvec(last+1:(last+nPL(i)*nPL(i-1))),[nPL(i-1),nPL(i)]);
                W_m{i-1} = aux; 
-               b_m{i-1} = bvec(lastb+1:lastb+nPL(i));
-               lastW = lastW + nPL(i)*nPL(i-1);
-               lastb = lastb + nPL(i);
+               b_m{i-1} = bvec(sum(nPL()):);
+               last = last+nPL(i)*nPL(i-1);
            end
        end        
     end
@@ -124,7 +122,7 @@ classdef Propagator < handle
            a{1} = x(1:I,:);
            for i = 2:nLy
                g_prev = a{i-1};
-               h = self.hypothesisfunction(g_prev,W{i-1},b{i-1});
+               h = self.hypothesisfunction(g_prev,W{i-1},b{i});
                g = self.sigmoid(h);
                a{i} = g;
            end
