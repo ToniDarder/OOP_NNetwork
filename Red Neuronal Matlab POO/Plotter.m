@@ -19,7 +19,7 @@ classdef Plotter < handle
             self.propagator = P;
         end
 
-        function plotBoundary(self,nFigure,W,b) 
+        function plotBoundary(self,W,b) 
            X = self.data.Xtrain;
            nF = size(X,2);
            nPL = self.neuronsPerLayer;
@@ -27,16 +27,19 @@ classdef Plotter < handle
            graphzoom = 10;
            [x1, x2] = createMesh();
            h = self.computeHeights(x1,x2,n_pts,nF,W,b);
-           figure(nFigure)
-           subplot(3,3,[1,2,3,4,5,6])
-           self.data.plotdata();
+           figure(10)
+%            subplot(3,3,[1,2,3,4,5,6])
+           
            colors = ['b','g','r','c','m','y','k','k'];
            C = x1*x2';
            for i = 1:nPL(end)
                hold on
-               contour(x1,x2,h(:,:,end+1-i)',[0 0],'color',colors(i))
+               contour(x1,x2,h(:,:,end+1-i)',[0,0],'color',colors(i))
                title('Contour 0')
            end
+           self.data.plotdata();
+           hold off
+
 %            for i = 1:nPL(end)
 %                subplot(3,3,i+6)                           
 %                surf(x1,x2,h(:,:,end+1-i),C)

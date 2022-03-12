@@ -33,7 +33,6 @@ classdef Trainer < handle
         function init(self,s)
             self.network      = s.network;
             self.isDisplayed  = s.isDisplayed;
-            self.delta        = 10^-4;
         end
 
         function [J,g] = costFunction(self,x,I)
@@ -62,7 +61,7 @@ classdef Trainer < handle
         end
 
         function plotMinimization(self,iter)
-            nIter = 50;
+            nIter = 10;
             if mod(iter,nIter) == 0 && iter ~= 0
                 v = 0:nIter:iter;
                 figure(self.figureCost)
@@ -75,7 +74,7 @@ classdef Trainer < handle
                 drawnow
                 if mod(iter,nIter*5) == 0
                     figure(self.figureBoundary);
-                    self.network.plotBoundary(self.figureBoundary)
+                    self.network.plotBoundary()
                 end
             end
         end    

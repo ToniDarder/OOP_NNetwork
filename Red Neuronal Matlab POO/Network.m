@@ -42,7 +42,8 @@ classdef Network < handle
            end
            obj.W = zeros(1,nW);
            obj.b = zeros(1,nb);
-           obj.theta0 = [obj.W,obj.b];
+           th0 = [obj.W,obj.b];
+           obj.theta0 = th0+rand([1,nW+nb])+10^-4;
        end
 
        function h = getOutput(obj,X)
@@ -70,8 +71,8 @@ classdef Network < handle
             obj.regularization = extractdata(r*l);
         end
 
-       function plotBoundary(obj,nFigure) 
-           obj.plotter.plotBoundary(nFigure,obj.W,obj.b);
+       function plotBoundary(obj) 
+           obj.plotter.plotBoundary(obj.W,obj.b);
        end
 
        function plotConections(obj)

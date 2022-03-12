@@ -5,22 +5,28 @@ close all;
 %Iris_Test;
 
 %% Initialization of hyperparameters
-lambda          = 3.3*10^-4;
-learningRate    = 0.01;
+% Data
 pol_deg         = 1;  
-testratio       = 0;     
+testratio       = 0; 
+
+% Network
+lambda          = 0;
+
+%Trainer
+learningRate    = 0.01;
+    
 
 %% Loading of files/datasets
 datasets = load("datasets.mat").datasets; 
 disp('Datsets available:')
 disp(datasets)
-file = datasets(1);                                                                                                     
+file = datasets(input('Choose: '));                                                                                                     
 
 %% Initialize the objects (Data, Network, Trainer)
 % Create de data and network objects
 data1 = Data(file,testratio,pol_deg);
 %load("iris_33_goodmin_10e-4.mat");
-hiddenlayers = [3,5];
+hiddenlayers = [4,8];
 net_structure       = [data1.nFeatures,hiddenlayers,data1.nLabels];      
 n.lambda            = lambda;
 n.Net_Structure     = net_structure;
@@ -31,6 +37,7 @@ network = Network(n);
 t               = n;
 t.isDisplayed   = true;
 t.network       = network;
+t.lr            = learningRate;
 t2 = t; t3 = t;
 t.type  = 'SGD';
 t2.type = 'fmin';
@@ -52,13 +59,23 @@ sgd_mom_opt = Trainer.create(t3);
 % -c setSolverOptions in each Optimizer
 % -c refactoring storeValue, plot and no more print
 % -c try different lambdas for SGD
+% -c try large dataSet for SGD (Gradient) with different lambdas
 
-% try large dataSet for SGD (Gradient) with different lambdas
-% try one layer
+% try without hidden layers
 % try more feautures in iris and see if gradient is still converging slow
 % study regularization related with overfitting
 % give tolerance line search
 % Plot cost,lineSearch (hbar),OptimalityCritera in subPlot for SGD and fmincon
 
+% Change plotBoundary to colormapped
+% Continue trying things
+
+% for i = 1:length(y)
+%     for j = 1:size(y,2)
+%         if y(i,j) ~= 0
+%             y2(i) = j;
+%         end
+%     end
+% end
 
 

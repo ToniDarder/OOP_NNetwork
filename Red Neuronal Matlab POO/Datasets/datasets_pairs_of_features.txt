@@ -1,0 +1,15 @@
+fourcircles
+
+iris [3,4]
+
+SteelPlates
+
+SteelPlates2
+
+WineQualityRed [2,10] [4,11]
+
+WineQualityWhite
+
+Cancer
+
+ThyroidCancer [1,21] [17,19]

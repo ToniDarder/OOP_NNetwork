@@ -9,12 +9,14 @@ classdef SGD_Optimizer < Trainer
        MaxFunctionEvaluations
        lSearchtype
        learningRate
+       optTolerance
     end
 
     methods(Access = public)
 
         function self = SGD_Optimizer(s)
             self.init(s)
+            self.learningRate = s.lr;
             self.setSolverOptions();
         end
         
@@ -23,12 +25,9 @@ classdef SGD_Optimizer < Trainer
            F = @(theta) self.costFunction(theta,self.batchSize); 
            self.optimize(F,x0);
         end     
-    end
-    
-    methods(Access = private)
 
         function optimize(self,F,x0)
-            d        = self.delta; 
+            d        = self.optTolerance; 
             epsilon  = self.learningRate;
             iter     = -1; 
             funcount = 0;
@@ -49,6 +48,9 @@ classdef SGD_Optimizer < Trainer
                 iter = iter + 1;
             end 
         end
+    end
+    
+    methods(Access = private)  
 
         function displayIter(self,iter,funcount,x,f,epsilon,gnorm,state)
             if self.isDisplayed == true
@@ -82,9 +84,9 @@ classdef SGD_Optimizer < Trainer
         end     
 
         function setSolverOptions(self)
-           self.learningRate = 10^-2;
            self.batchSize = 150;
-           self.MaxFunctionEvaluations = 2000;    
+           self.optTolerance = 10^-6;
+           self.MaxFunctionEvaluations = 5000;    
            self.lSearchtype = 'dynamic';
         end 
 

@@ -101,7 +101,9 @@ classdef Propagator < handle
            nLb = self.data.nLabels;
            m = I;
            J = 0;
-           for i = 1:nLb
+
+%            J = mean((y(:,1)-g(:,1)).^2);
+           for i = 1:nLb              
                err1 = (1-y(:,i)).*(-log(1-g(:,i)));
                err0 = y(:,i).*(-log(g(:,i)));
                j = (1/m)*sum(err1+err0);
