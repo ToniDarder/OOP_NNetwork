@@ -8,7 +8,6 @@ classdef Trainer < handle
        network
           
        costHist
-       figureBoundary
        figureCost
        xIter
        delta
@@ -49,7 +48,6 @@ classdef Trainer < handle
                 case 'init'
                     self.costHist = [0,0,0];
                     self.figureCost = figure;
-                    self.figureBoundary = figure;
                 case 'iter'
                     cV = zeros(1,3);
                     cV(1) = f;
@@ -73,7 +71,6 @@ classdef Trainer < handle
                 ylabel('Function Values')
                 drawnow
                 if mod(iter,nIter*5) == 0
-                    figure(self.figureBoundary);
                     self.network.plotBoundary()
                 end
             end

@@ -28,6 +28,7 @@ classdef Plotter < handle
            [x1, x2] = createMesh();
            h = self.computeHeights(x1,x2,n_pts,nF,W,b);
            figure(10)
+           clf(10)
 %            subplot(3,3,[1,2,3,4,5,6])
            
            colors = ['b','g','r','c','m','y','k','k'];

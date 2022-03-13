@@ -29,7 +29,7 @@ classdef Propagator < handle
             self.neuronsPerLayer = init.Net_Structure;
             self.nLayers = length(init.Net_Structure);
             self.nData = length(init.data.Ytrain);
-            self.network = init.obj;
+            self.network = init.self;
         end
 
         function [J,gradient] = propagate(self,theta,I)

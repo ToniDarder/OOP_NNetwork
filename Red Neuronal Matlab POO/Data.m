@@ -21,19 +21,19 @@ classdef Data < handle
     end
 
     methods (Access = public)
-        function obj = Data(File_Name,TP,d)
-            obj.init(File_Name,TP,d)
+        function self = Data(File_Name,TP,d)
+            self.init(File_Name,TP,d)
         end
 
-        function plotdata(obj)
-            gscatter(obj.Xdata(:,1),obj.Xdata(:,2),obj.Ydata,'bgrcmyk','xo*+.sd')
+        function plotdata(self)
+            gscatter(self.Xdata(:,1),self.Xdata(:,2),self.Ydata,'bgrcmyk','xo*+.sd')
             xlabel("X3");
             ylabel("X4");
         end
 
-        function drawCorrMatrix(obj)
-            x = obj.Xfullfeat;
-            y = obj.Ydata;
+        function drawCorrMatrix(self)
+            x = self.Xfullfeat;
+            y = self.Ydata;
             nf = size(x,2);
             figure            
             t = tiledlayout(nf,nf,'TileSpacing','Compact'); 
@@ -58,9 +58,9 @@ classdef Data < handle
             end
         end
 
-        function drawCorrRow(obj,k)
-            x = obj.Xfullfeat;
-            y = obj.Ydata;
+        function drawCorrRow(self,k)
+            x = self.Xfullfeat;
+            y = self.Ydata;
             nf = size(x,2);
             n = ceil(nf^0.5);
             figure            
@@ -77,32 +77,32 @@ classdef Data < handle
             end
         end
 
-        function updateHyperparameter(obj,h)
+        function updateHyperparameter(self,h)
            switch h.type
                case 'testPercentage'
-                   obj.testPercentage = h.value;
-                   obj.splitdata()
+                   self.testPercentage = h.value;
+                   self.splitdata()
                case 'polyGrade'
-                   obj.polyGrade = h.value;
-                   obj.computefullvars(obj.X,obj.polyGrade);
+                   self.polyGrade = h.value;
+                   self.computefullvars(self.X,self.polyGrade);
            end
        end
     end
 
     methods (Access = private)
 
-        function init(obj,File_Name,TP,d)
-            obj.loadData(File_Name);
-            obj.nData = size(obj.Xdata,1);
-            obj.testPercentage = TP;
-            obj.polyGrade = d;
-            obj.nLabels = size(obj.Ydata,2);
-            obj.splitdata()
-            obj.computefullvars(obj.X,d)
-            obj.nFeatures = size(obj.Xtrain,2);
+        function init(self,File_Name,TP,d)
+            self.loadData(File_Name);
+            self.nData = size(self.Xdata,1);
+            self.testPercentage = TP;
+            self.polyGrade = d;
+            self.nLabels = size(self.Ydata,2);
+            self.splitdata()
+            self.computefullvars(self.X,d)
+            self.nFeatures = size(self.Xtrain,2);
         end
 
-        function loadData(obj,FN)
+        function loadData(self,FN)
             f = fullfile('Datasets', FN);
             data = load(f);
             feat = input('Features to be used: ');
@@ -117,25 +117,25 @@ classdef Data < handle
                     end
                 end
             end
-            obj.Xdata = x;
-            obj.Ydata = y;
-            obj.Xfullfeat = data(:,1:(end-1));
+            self.Xdata = x;
+            self.Ydata = y;
+            self.Xfullfeat = data(:,1:(end-1));
         end
         
-        function splitdata(obj)
+        function splitdata(self)
             % Shuffles the data and splits data in train and test
-            nD = obj.nData;
-            TP = obj.testPercentage;
+            nD = self.nData;
+            TP = self.testPercentage;
             r = randperm(nD);
             ntest = round(TP/100*nD);
             ntrain = nD - ntest;
-            obj.X = obj.Xdata(r(1:ntrain),:);
-            obj.Xtest = obj.Xdata(r((ntrain + 1):end),:);
-            obj.Y = obj.Ydata(r(1:ntrain),:);
-            obj.Ytest = obj.Ydata(r((ntrain + 1):end),:);
+            self.X = self.Xdata(r(1:ntrain),:);
+            self.Xtest = self.Xdata(r((ntrain + 1):end),:);
+            self.Y = self.Ydata(r(1:ntrain),:);
+            self.Ytest = self.Ydata(r((ntrain + 1):end),:);
         end
 
-        function computefullvars(obj,x,d)
+        function computefullvars(self,x,d)
             % Builds a X matrix with more features using lineal combinations
             x1 = x(:,1); 
             x2 = x(:,2);
@@ -146,8 +146,8 @@ classdef Data < handle
                        cont = cont+1;
                 end
             end
-            obj.Xtrain = Xful;
-            obj.Ytrain = obj.Y;
+            self.Xtrain = Xful;
+            self.Ytrain = self.Y;
         end 
     end
 end

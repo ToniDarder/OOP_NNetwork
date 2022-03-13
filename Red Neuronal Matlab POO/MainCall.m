@@ -60,6 +60,9 @@ sgd_mom_opt = Trainer.create(t3);
 % -c refactoring storeValue, plot and no more print
 % -c try different lambdas for SGD
 % -c try large dataSet for SGD (Gradient) with different lambdas
+% -t changed the linear transf of each layer now has independent term
+% -t no more "ones" as input in X
+% -t 
 
 % try without hidden layers
 % try more feautures in iris and see if gradient is still converging slow
