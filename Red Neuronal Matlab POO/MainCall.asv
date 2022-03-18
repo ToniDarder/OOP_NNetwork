@@ -23,7 +23,7 @@ disp(datasets)
 file = datasets(input('Choose: '));                                                                                                     
 
 %% Initialize the objects (Data, Network, Trainer)
-% Create the data and network objects
+% Create de data and network objects
 data1 = Data(file,testratio,pol_deg);
 %load("iris_33_goodmin_10e-4.mat");
 hiddenlayers = [4,8];
@@ -32,7 +32,7 @@ n.lambda            = lambda;
 n.Net_Structure     = net_structure;
 n.data              = data1;
 n.prop              = 'backprop';
-n.costFunction       = '-loglikelihood';
+ncostFunction       = 
 network = Network(n);
 
 % Create a trainer from each type of solver

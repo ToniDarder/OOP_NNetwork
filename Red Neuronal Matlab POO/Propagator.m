@@ -19,7 +19,8 @@ classdef Propagator < handle
         network
         nData
         Ibatch
-        prop
+        propType
+        costFCNtype
     end
     
     methods (Access = public)
@@ -31,7 +32,8 @@ classdef Propagator < handle
             self.nLayers = length(init.Net_Structure);
             self.nData = length(init.data.Ytrain);
             self.network = init.self;
-            self.prop = init.prop;
+            self.propType = init.prop;
+            self.costFCNtype = init.costFunction;
         end
 
         function [J,gradient] = propagate(self,theta,I)
@@ -40,7 +42,7 @@ classdef Propagator < handle
             else
                 self.Ibatch = I;
             end
-            switch self.prop
+            switch self.propType
                 case 'autodiff'
                     th = dlarray(theta);
                     j = @(theta) self.f_adiff(theta);
@@ -179,21 +181,9 @@ classdef Propagator < handle
            end
            grad = [Wvec,bvec];
        end
-    end
-    
-    methods (Access = private, Static)      
-        function h = hypothesisfunction(X,W,b)
-          h = X*W + b;
-        end     
 
-        function [g,g_der] = sigmoid(z)
-            % OJO amb com estic usant la derivada de la sigmoid
-            g = 1./(1+exp(-z));
-            g_der = z.*(1-z);
-        end
-
-        function [J,gc] = costFunction(y,yp)
-            type = '-loglikelihood';
+       function [J,gc] = costFunction(self,y,yp)
+            type = self.costFCNtype;
             J = 0;
             switch type
                 case '-loglikelihood'
@@ -209,6 +199,18 @@ classdef Propagator < handle
                     end
                     gc = (yp-y);
             end
+        end
+    end
+    
+    methods (Access = private, Static)      
+        function h = hypothesisfunction(X,W,b)
+          h = X*W + b;
+        end     
+
+        function [g,g_der] = sigmoid(z)
+            % OJO amb com estic usant la derivada de la sigmoid
+            g = 1./(1+exp(-z));
+            g_der = z.*(1-z);
         end
     end  
 end
