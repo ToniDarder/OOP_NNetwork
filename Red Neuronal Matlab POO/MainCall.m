@@ -31,6 +31,7 @@ net_structure       = [data1.nFeatures,hiddenlayers,data1.nLabels];
 n.lambda            = lambda;
 n.Net_Structure     = net_structure;
 n.data              = data1;
+n.prop              = 'backprop';
 network = Network(n);
 
 % Create a trainer from each type of solver
@@ -56,22 +57,12 @@ sgd_mom_opt = Trainer.create(t3);
 % network.plotConnections();
 
 %% Suggestions
-% -c setSolverOptions in each Optimizer
-% -c refactoring storeValue, plot and no more print
-% -c try different lambdas for SGD
-% -c try large dataSet for SGD (Gradient) with different lambdas
-% -t changed the linear transf of each layer now has independent term
-% -t no more "ones" as input in X
-% -t 
 
-% try without hidden layers
-% try more feautures in iris and see if gradient is still converging slow
-% study regularization related with overfitting
-% give tolerance line search
-% Plot cost,lineSearch (hbar),OptimalityCritera in subPlot for SGD and fmincon
-
-% Change plotBoundary to colormapped
-% Continue trying things
+% 1 - Plot boundary in corrmatrix (investigar)
+% 2 - PLotconections add colors
+% 3 - Try minibatch SGD for iris & larger datasets
+% 4 - Plot cost,lineSearch (hbar),OptimalityCritera in subPlot for SGD and fmincon
+% 5 - Change plotBoundary to colormapped
 
 % for i = 1:length(y)
 %     for j = 1:size(y,2)

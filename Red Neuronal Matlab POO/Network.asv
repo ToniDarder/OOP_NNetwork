@@ -18,6 +18,7 @@ classdef Network < handle
    properties (Access = private)
        propagator
        plotter
+       prop
    end
 
    methods (Access = public)
@@ -58,13 +59,13 @@ classdef Network < handle
 
        function computeLoss(self)
            l = self.propagator.loss;
-           self.loss = l;
+           self.loss = extractdata(l);
         end
 
         function computeRegularization(self)
             r = self.propagator.regularization;
             l = self.lambda;
-            self.regularization = r*l;
+            self.regularization = extractdata(r*l);
         end
 
         function plotBoundary(self) 
@@ -94,6 +95,7 @@ classdef Network < handle
            s.self = self;
            self.propagator = Propagator(s);
            self.plotter = Plotter(s,self.propagator);
+           self.prop = s.prop;
        end  
    end   
 end

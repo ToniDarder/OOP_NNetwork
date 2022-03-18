@@ -24,8 +24,11 @@ classdef SGD_Optimizer < Trainer
            x0  = self.network.theta0; 
            F = @(theta) self.costFunction(theta,self.batchSize); 
            self.optimize(F,x0);
-        end     
-
+        end 
+    end
+    
+    methods(Access = private)  
+        
         function optimize(self,F,x0)
             d        = self.optTolerance; 
             epsilon  = self.learningRate;
@@ -48,17 +51,6 @@ classdef SGD_Optimizer < Trainer
                 iter = iter + 1;
             end 
         end
-    end
-    
-    methods(Access = private)  
-
-        function displayIter(self,iter,funcount,x,f,epsilon,gnorm,state)
-            if self.isDisplayed == true
-                self.printValues(funcount,epsilon,gnorm,f,iter)
-                self.storeValues(x,f,state);
-                self.plotMinimization(iter);
-            end
-        end  
 
         function [e,x,funcount] = lineSearch(self,x,grad,F,fOld,e,funcount)
             switch self.lSearchtype
@@ -85,10 +77,18 @@ classdef SGD_Optimizer < Trainer
 
         function setSolverOptions(self)
            self.batchSize = 150;
-           self.optTolerance = 10^-6;
+           self.optTolerance = 10^-5;
            self.MaxFunctionEvaluations = 5000;    
            self.lSearchtype = 'dynamic';
         end 
+        
+        function displayIter(self,iter,funcount,x,f,epsilon,gnorm,state)
+            if self.isDisplayed == true
+                self.printValues(funcount,epsilon,gnorm,f,iter)
+                self.storeValues(x,f,state);
+                self.plotMinimization(iter);
+            end
+        end  
 
         function printValues(self,funcount,epsilon,gnorm,f,iter)
             formatstr = ' %5.0f       %5.0f    %13.6g  %13.6g   %12.3g\n';

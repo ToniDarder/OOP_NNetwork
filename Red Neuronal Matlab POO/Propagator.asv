@@ -156,6 +156,7 @@ classdef Propagator < handle
            for k = nLy:-1:2
                [~,a_der] = self.sigmoid(a{k}); 
                if k == nLy
+                   delta{k} = a{end} - y(1:I,:);
                    [~,t1] = self.costFunction(y(1:I,:),a{end});  
                    delta{k} = t1.*a_der;
                else  
@@ -187,9 +188,8 @@ classdef Propagator < handle
         end     
 
         function [g,g_der] = sigmoid(z)
-            % OJO amb com estic usant la derivada de la sigmoid
             g = 1./(1+exp(-z));
-            g_der = z.*(1-z);
+            g_der = g.*(1-g);
         end
 
         function [J,gc] = costFunction(y,yp)
