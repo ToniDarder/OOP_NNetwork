@@ -111,17 +111,7 @@ classdef Propagator < handle
            I = self.Ibatch;
            g = a{end}(1:I,:);
            y =  self.data.Ytrain(1:I,:);
-           nLb = self.data.nLabels;
-           m = I;
-           J = 0;
-
-%            J = mean((y(:,1)-g(:,1)).^2);
-           for i = 1:nLb              
-               err1 = (1-y(:,i)).*(-log(1-g(:,i)));
-               err0 = y(:,i).*(-log(g(:,i)));
-               j = (1/m)*sum(err1+err0);
-               J = J + j;
-           end
+           [J,~] = self.costFunction(y,g);
            self.loss = J;
        end
 
@@ -166,7 +156,7 @@ classdef Propagator < handle
                gradW{k-1} = (1/length(y))*a{k-1}'*delta{k};
                gradb{k-1} = (1/length(y))*sum(delta{k},1);
            end
-       grad = self.Wbgrad_to_gradvec(gradW,gradb);
+           grad = self.Wbgrad_to_gradvec(gradW,gradb);
        end
 
        function grad = Wbgrad_to_gradvec(self,gradW,gradb)
