@@ -67,8 +67,8 @@ classdef Network < handle
             self.regularization = r*l;
         end
 
-        function plotBoundary(self) 
-           self.plotter.plotBoundary(self.W,self.b);
+        function plotBoundary(self,type) 
+           self.plotter.plotBoundary(self.W,self.b,type);
        end
 
        function plotConections(self)

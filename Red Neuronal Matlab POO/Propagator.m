@@ -59,7 +59,7 @@ classdef Propagator < handle
             end
         end       
 
-       function h = compute_last_H(self,X,W,b)
+       function g = compute_last_H(self,X,W,b)
             h = self.hypothesisfunction(X,W{1},b{1});
             [g,~] = self.sigmoid(h);
             for i = 2:self.nLayers-1

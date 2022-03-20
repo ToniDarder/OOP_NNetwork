@@ -34,7 +34,7 @@ classdef Plotter < handle
                case 'contour'
                    for i = 1:nPL(end)
                        hold on
-                       contour(x1,x2,h(:,:,i)',[0.5,0.5],'color',colorsc(i))
+                       contour(x1,x2,h(:,:,end+1-i)',[0.5,0.5],'color',colorsc(i))
                    end
                case 'filled'
                    im = cell(size(self.data.Ytrain,2),1);
@@ -128,9 +128,9 @@ classdef Plotter < handle
                     circlei.plot();
                 end
             end
-            r = [linspace(1,1,50)',linspace(0.75,0,50)',linspace(0.75,0,50)'];
-            b = [linspace(0,0.75,50)',linspace(0,0.75,50)',linspace(1,1,50)'];
-            rgb = [b;r];
+            r = [linspace(1,1,50)',linspace(1,0.5,50)',linspace(1,0.5,50)'];
+            b = [linspace(0.5,1,50)',linspace(0.5,1,50)',linspace(1,1,50)'];
+            rgb = [r;b];
             for i = 1:nLy-1
                 for j = 1:NPL(i)
                     neuronb = neurons{i,j};
@@ -138,16 +138,20 @@ classdef Plotter < handle
                         neuronf = neurons{i+1,k};
                         wth = abs(W{i}(j,k)/maxTH);
                         lw = 3*wth;
-                        idx = round(wth*100);
-                        if idx == 0
-                            idx = 1;
-                        end
-                        linecolor = rgb(idx,:);
+                        linecolor = rgb(round(wth*100),:);
                         %linecolor = [0 , 0, 1];
                         line([neuronb.fx,neuronf.bx],[neuronb.fy,neuronf.by],'Color',linecolor,'LineWidth',lw)
                     end
                 end
             end
+%             for i = 1:NPL(1)
+%                 hold on
+%                 neuroni = neurons{i,1};
+%                 v1 = [neuroni.bx-10,neuroni.by];
+%                 v2 = [neuroni.bx,neuroni.by];
+%                 dv = v2 - v1;
+%                 quiver(v1(1),v1(2),dv(1),dv(2),0)
+%             end
             hold off
         end
     end
