@@ -39,8 +39,13 @@ classdef Fminunc_Optimizer < Trainer
         function stop = myoutput(self,x,optimvalues,state,args)
             stop = false;
             f = optimvalues.fval;
+            opt.epsilon = optimvalues.stepsize;
+            opt.gnorm = optimvalues.firstorderopt;
             iter = optimvalues.iteration;
-            self.storeValues(x,f,state);
+            if iter == 0
+                opt.epsilon = 1;
+            end
+            self.storeValues(x,f,state,opt);
             self.plotMinimization(iter);                                
         end
     end

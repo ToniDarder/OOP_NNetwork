@@ -85,19 +85,19 @@ classdef SGD_Optimizer < Trainer
         
         function displayIter(self,iter,funcount,x,f,opt,state)
             if self.isDisplayed == true
-                self.printValues(funcount,opt,f,iter)
+                self.printValues(funcount,epsilon,gnorm,f,iter)
                 self.storeValues(x,f,state,opt);
                 self.plotMinimization(iter);
             end
         end  
 
-        function printValues(self,funcount,opt,f,iter)
+        function printValues(self,funcount,epsilon,gnorm,f,iter)
             formatstr = ' %5.0f       %5.0f    %13.6g  %13.6g   %12.3g\n';
             if mod(iter,20) == 0
                 fprintf(['                                                        First-order \n', ...
                     ' Iteration  Func-count       f(x)        Step-size       optimality\n']);
             end
-            fprintf(formatstr,iter,funcount,f,opt.epsilon,opt.gnorm);
+            fprintf(formatstr,iter,funcount,f,epsilon,gnorm);
         end
     end    
 end
