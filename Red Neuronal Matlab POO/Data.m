@@ -26,7 +26,7 @@ classdef Data < handle
         end
 
         function plotdata(self)
-            gscatter(self.Xdata(:,1),self.Xdata(:,2),self.Ydata,'bgrcmyk','xo*+.sd')
+            gscatter(self.Xdata(:,1),self.Xdata(:,2),self.Ydata,'rgbcmyk','xo*+.sd')
             xlabel("X3");
             ylabel("X4");
         end
@@ -86,7 +86,7 @@ classdef Data < handle
                    self.polyGrade = h.value;
                    self.computefullvars(self.X,self.polyGrade);
            end
-       end
+        end
     end
 
     methods (Access = private)
@@ -137,17 +137,19 @@ classdef Data < handle
 
         function computefullvars(self,x,d)
             % Builds a X matrix with more features using lineal combinations
-            x1 = x(:,1); 
-            x2 = x(:,2);
-            cont = 1;
-            for g = 1:d
-                for a = 0:g
-                       Xful(:,cont) = x2.^(a).*x1.^(g-a);
-                       cont = cont+1;
-                end
-            end
-            self.Xtrain = Xful;
-            self.Ytrain = self.Y;
+%             x1 = x(:,1); 
+%             x2 = x(:,2);
+%             cont = 1;
+%             for g = 1:d
+%                 for a = 0:g
+%                        Xful(:,cont) = x2.^(a).*x1.^(g-a);
+%                        cont = cont+1;
+%                 end
+%             end
+%             self.Xtrain = Xful;
+%             self.Ytrain = self.Y;
+             self.Xtrain = self.X;
+             self.Ytrain = self.Y;
         end 
     end
 end

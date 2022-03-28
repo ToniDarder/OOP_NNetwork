@@ -39,7 +39,7 @@ classdef Network < handle
            self.W = zeros(1,nW);
            self.b = zeros(1,nb);
            th0 = [self.W,self.b];
-           self.theta0 = (th0+rand([1,nW+nb])+10^-4)*1;
+           self.theta0 = (th0+rand([1,nW+nb])+10^-4)*10^(0);
        end
 
        function h = getOutput(self,X)
@@ -73,6 +73,10 @@ classdef Network < handle
 
        function plotConections(self)
            self.plotter.plotNetworkStatus(self.W);
+       end
+
+       function plotConfusionMatrix(self)
+           self.plotter.drawConfusionMat(self.W,self.b);
        end
 
        function updateHyperparameter(self,h)

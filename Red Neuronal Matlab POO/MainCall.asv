@@ -7,7 +7,7 @@ close all;
 %% Initialization of hyperparameters
 % Data
 pol_deg         = 1;  
-testratio       = 0; 
+testratio       = 25; 
 
 % Network
 lambda          = 0;
@@ -22,25 +22,27 @@ disp('Datsets available:')
 disp(datasets)
 file = datasets(input('Choose: '));                                                                                                     
 
-%% Initialize the objects (Data, Network, Trainer)
-% Create de data and network objects
+%% Create the data object
 data1 = Data(file,testratio,pol_deg);
 %load("iris_33_goodmin_10e-4.mat");
-hiddenlayers = [4,8];
+%load('Test1iris.mat');
+%load('Test4circles1.mat')
+
+%% Create Network Object
+hiddenlayers = [64,64,128,128,512];
 net_structure       = [data1.nFeatures,hiddenlayers,data1.nLabels];      
 n.lambda            = lambda;
 n.Net_Structure     = net_structure;
 n.data              = data1;
 n.prop              = 'backprop';
-ncostFunction       = 
+n.costFunction       = '-loglikelihood';
 network = Network(n);
 
-% Create a trainer from each type of solver
+%% Create a trainer object
 t               = n;
-t.isDisplayed   = true;
+t.isDisplayed   = false;
 t.network       = network;
 t.lr            = learningRate;
-t2 = t; t3 = t;
 t.type  = 'SGD';
 t2.type = 'fmin';
 t3.type = 'SGD_mom';
@@ -60,10 +62,10 @@ sgd_mom_opt = Trainer.create(t3);
 %% Suggestions
 
 % 1 - Plot boundary in corrmatrix (investigar)
-% 2 - PLotconections add colors
+% 2 -c PLotconections add colors
 % 3 - Try minibatch SGD for iris & larger datasets
-% 4 - Plot cost,lineSearch (hbar),OptimalityCritera in subPlot for SGD and fmincon
-% 5 - Change plotBoundary to colormapped
+% 4 -c Plot cost,lineSearch (hbar),OptimalityCritera in subPlot for SGD and fmincon
+% 5 -c Change plotBoundary to colormapped
 
 % for i = 1:length(y)
 %     for j = 1:size(y,2)

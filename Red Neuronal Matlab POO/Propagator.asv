@@ -19,7 +19,8 @@ classdef Propagator < handle
         network
         nData
         Ibatch
-        prop
+        propType
+        costFCNtype
     end
     
     methods (Access = public)
@@ -31,7 +32,8 @@ classdef Propagator < handle
             self.nLayers = length(init.Net_Structure);
             self.nData = length(init.data.Ytrain);
             self.network = init.self;
-            self.prop = init.prop;
+            self.propType = init.prop;
+            self.costFCNtype = init.costFunction;
         end
 
         function [J,gradient] = propagate(self,theta,I)
@@ -40,7 +42,7 @@ classdef Propagator < handle
             else
                 self.Ibatch = I;
             end
-            switch self.prop
+            switch self.propType
                 case 'autodiff'
                     th = dlarray(theta);
                     j = @(theta) self.f_adiff(theta);
@@ -57,7 +59,7 @@ classdef Propagator < handle
             end
         end       
 
-       function h = compute_last_H(self,X,W,b)
+       function g = compute_last_H(self,X,W,b)
             h = self.hypothesisfunction(X,W{1},b{1});
             [g,~] = self.sigmoid(h);
             for i = 2:self.nLayers-1
@@ -109,17 +111,7 @@ classdef Propagator < handle
            I = self.Ibatch;
            g = a{end}(1:I,:);
            y =  self.data.Ytrain(1:I,:);
-           nLb = self.data.nLabels;
-           m = I;
-           J = 0;
-
-%            J = mean((y(:,1)-g(:,1)).^2);
-           for i = 1:nLb              
-               err1 = (1-y(:,i)).*(-log(1-g(:,i)));
-               err0 = y(:,i).*(-log(g(:,i)));
-               j = (1/m)*sum(err1+err0);
-               J = J + j;
-           end
+           [J,~] = self.costFunction(y,g);
            self.loss = J;
        end
 
@@ -134,7 +126,7 @@ classdef Propagator < handle
            I = self.Ibatch;
            nLy = self.nLayers;
            a = cell(nLy,1);
-           a{1} = x(1:I,:);
+           a{1} = x(1:I,:)+2;
            for i = 2:nLy
                g_prev = a{i-1};
                h = self.hypothesisfunction(g_prev,W{i-1},b{i-1});
@@ -156,7 +148,6 @@ classdef Propagator < handle
            for k = nLy:-1:2
                [~,a_der] = self.sigmoid(a{k}); 
                if k == nLy
-                   delta{k} = a{end} - y(1:I,:);
                    [~,t1] = self.costFunction(y(1:I,:),a{end});  
                    delta{k} = t1.*a_der;
                else  
@@ -165,7 +156,7 @@ classdef Propagator < handle
                gradW{k-1} = (1/length(y))*a{k-1}'*delta{k};
                gradb{k-1} = (1/length(y))*sum(delta{k},1);
            end
-       grad = self.Wbgrad_to_gradvec(gradW,gradb);
+           grad = self.Wbgrad_to_gradvec(gradW,gradb);
        end
 
        function grad = Wbgrad_to_gradvec(self,gradW,gradb)
@@ -180,20 +171,9 @@ classdef Propagator < handle
            end
            grad = [Wvec,bvec];
        end
-    end
-    
-    methods (Access = private, Static)      
-        function h = hypothesisfunction(X,W,b)
-          h = X*W + b;
-        end     
 
-        function [g,g_der] = sigmoid(z)
-            g = 1./(1+exp(-z));
-            g_der = g.*(1-g);
-        end
-
-        function [J,gc] = costFunction(y,yp)
-            type = '-loglikelihood';
+       function [J,gc] = costFunction(self,y,yp)
+            type = self.costFCNtype;
             J = 0;
             switch type
                 case '-loglikelihood'
@@ -209,6 +189,18 @@ classdef Propagator < handle
                     end
                     gc = (yp-y);
             end
+        end
+    end
+    
+    methods (Access = private, Static)      
+        function h = hypothesisfunction(X,W,b)
+          h = X*W + b;
+        end     
+
+        function [g,g_der] = sigmoid(z)
+            % OJO amb com estic usant la derivada de la sigmoid
+            g = 1./(1+exp(-z));
+            g_der = z.*(1-z);
         end
     end  
 end

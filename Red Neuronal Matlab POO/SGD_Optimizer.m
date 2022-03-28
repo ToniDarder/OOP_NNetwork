@@ -77,9 +77,9 @@ classdef SGD_Optimizer < Trainer
         end     
 
         function setSolverOptions(self)
-           self.batchSize = 150;
-           self.optTolerance = 10^-5;
-           self.MaxFunctionEvaluations = 5000;    
+           self.batchSize = 100;
+           self.optTolerance = 10^-8;
+           self.MaxFunctionEvaluations = 2000;    
            self.lSearchtype = 'dynamic';
         end 
         

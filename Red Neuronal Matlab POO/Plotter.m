@@ -25,16 +25,17 @@ classdef Plotter < handle
            nPL = self.neuronsPerLayer;
            n_pts = 30;
            graphzoom = 1.5;
-           [x1, x2] = createMesh();
-           h = self.computeHeights(x1,x2,n_pts,nF,W,b);
+           x = createMesh();
+           h = self.computeHeights(x(:,1),x(:,2),n_pts,nF,W,b);
            figure(10)
            clf(10)     
            colorsc = ['r','g','b','c','m','y','k'];
+           colorsc = fliplr(colorsc(1:size(self.data.Ytrain,2)));
            switch type
                case 'contour'
                    for i = 1:nPL(end)
                        hold on
-                       contour(x1,x2,h(:,:,i)',[0.5,0.5],'color',colorsc(i))
+                       contour(x(:,1),x(:,2),h(:,:,i)',[0.5,0.5],'color',colorsc(i))
                    end
                case 'filled'
                    im = cell(size(self.data.Ytrain,2),1);
@@ -42,7 +43,7 @@ classdef Plotter < handle
                    for i = 1:nPL(end)
                        hold on
                        h(i) = axes;
-                       im{i} = imagesc(x1,x2,h(:,:,end+1-i)');
+                       im{i} = imagesc(x(:,1),x(:,2),h(:,:,end+1-i)');
                        im{i}.AlphaData = .5;
                        colormap(h(i),mymap{i})
                        if i > 1
@@ -57,12 +58,13 @@ classdef Plotter < handle
            self.data.plotdata();
            hold off
 
-           function [x1, x2] = createMesh()
+           function x = createMesh()
                gZ = graphzoom;
                extra_f1 = mean(X(:,1))*gZ;
                extra_f2 = mean(X(:,2))*gZ;
                x1 = linspace(min(X(:,1))-extra_f1,max(X(:,1))+extra_f1,n_pts)';
                x2 = linspace(min(X(:,2))-extra_f2,max(X(:,2))+extra_f2,n_pts)';
+               x = [x1,x2];
            end
            function mymap = colormaps()
                colors = [0,0,1;   % b
@@ -149,6 +151,14 @@ classdef Plotter < handle
                 end
             end
             hold off
+        end
+
+        function drawConfusionMat(self,W,bm)
+            targets = self.data.Ytest;
+            x = self.data.Xtest;
+            nPL = self.neuronsPerLayer;
+            outputs = self.propagator.compute_last_H(x,W,bm);
+            plotconfusion(targets',outputs')
         end
     end
 

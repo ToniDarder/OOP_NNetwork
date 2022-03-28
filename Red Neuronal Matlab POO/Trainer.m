@@ -72,7 +72,7 @@ classdef Trainer < handle
                 self.plotCostRegErr(v,nIter);
                 self.plotEpsOpt(v,nIter)
             end
-            if mod(iter,nIter*5) == 0
+            if mod(iter,nIter*5) == 0 && self.network.data.nFeatures <= 2
                 self.network.plotBoundary('contour')
             end
         end  
