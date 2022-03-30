@@ -29,26 +29,24 @@ data1 = Data(file,testratio,pol_deg);
 %load('Test4circles1.mat')
 
 %% Create Network Object
-hiddenlayers = [64,64,128,128,512];
+hiddenlayers = [4,8];
+hiddenACT    = ['sigmoid','sigmoid'];
 net_structure       = [data1.nFeatures,hiddenlayers,data1.nLabels];      
 n.lambda            = lambda;
 n.Net_Structure     = net_structure;
 n.data              = data1;
-n.prop              = 'backprop';
+n.prop              = 'autodiff';
 n.costFunction       = '-loglikelihood';
+n.activationFunction = 'sigmoid';
 network = Network(n);
 
 %% Create a trainer object
 t               = n;
-t.isDisplayed   = false;
+t.isDisplayed   = true;
 t.network       = network;
 t.lr            = learningRate;
 t.type  = 'SGD';
-t2.type = 'fmin';
-t3.type = 'SGD_mom';
 sgd_opt     = Trainer.create(t);
-fmin_opt    = Trainer.create(t2);
-sgd_mom_opt = Trainer.create(t3);
 
 %% Possible functions
 % data.var_corrmatrix();
@@ -58,6 +56,7 @@ sgd_mom_opt = Trainer.create(t3);
 % nFigure = 100;
 % network.plotBoundary(nFigure);
 % network.plotConnections();
+
 
 %% Suggestions
 

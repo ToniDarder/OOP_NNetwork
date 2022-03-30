@@ -66,13 +66,13 @@ classdef Trainer < handle
         end
 
         function plotMinimization(self,iter)
-            nIter = 10;
+            nIter = 50;
             if mod(iter,nIter) == 0 && iter ~= 0
                 v = 0:nIter:iter;
                 self.plotCostRegErr(v,nIter);
                 self.plotEpsOpt(v,nIter)
             end
-            if mod(iter,nIter*5) == 0 && self.network.data.nFeatures <= 2
+            if mod(iter,nIter*2) == 0 && self.network.data.nFeatures <= 2
                 self.network.plotBoundary('contour')
             end
         end  

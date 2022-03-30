@@ -7,7 +7,7 @@ close all;
 %% Initialization of hyperparameters
 % Data
 pol_deg         = 1;  
-testratio       = 25; 
+testratio       = 0; 
 
 % Network
 lambda          = 0;
@@ -29,13 +29,14 @@ data1 = Data(file,testratio,pol_deg);
 %load('Test4circles1.mat')
 
 %% Create Network Object
-hiddenlayers = [32,64,128,64,32];
-net_structure       = [data1.nFeatures,hiddenlayers,data1.nLabels];      
-n.lambda            = lambda;
-n.Net_Structure     = net_structure;
-n.data              = data1;
-n.prop              = 'autodiff';
-n.costFunction       = '-loglikelihood';
+hiddenlayers = [4,8];
+net_structure           = [data1.nFeatures,hiddenlayers,data1.nLabels];      
+n.lambda                = lambda;
+n.Net_Structure         = net_structure;
+n.data                  = data1;
+n.prop                  = 'backprop';
+n.costFunction          = '-loglikelihood';
+n.activationFunction    = 'sigmoid';
 network = Network(n);
 
 %% Create a trainer object
@@ -43,8 +44,8 @@ t               = n;
 t.isDisplayed   = true;
 t.network       = network;
 t.lr            = learningRate;
-t.type  = 'SGD';
-sgd_opt     = Trainer.create(t);
+t.type          = 'SGD';
+optimizer       = Trainer.create(t);
 
 %% Possible functions
 % data.var_corrmatrix();

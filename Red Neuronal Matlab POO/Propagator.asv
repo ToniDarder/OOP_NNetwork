@@ -21,6 +21,7 @@ classdef Propagator < handle
         Ibatch
         propType
         costFCNtype
+        activationFCNtype
     end
     
     methods (Access = public)
@@ -34,6 +35,7 @@ classdef Propagator < handle
             self.network = init.self;
             self.propType = init.prop;
             self.costFCNtype = init.costFunction;
+            self.activationFCNtype = init.activationFunction;
         end
 
         function [J,gradient] = propagate(self,theta,I)
@@ -61,10 +63,10 @@ classdef Propagator < handle
 
        function g = compute_last_H(self,X,W,b)
             h = self.hypothesisfunction(X,W{1},b{1});
-            [g,~] = self.sigmoid(h);
+            [g,~] = self.actFCN(h,1);
             for i = 2:self.nLayers-1
                 h = self.hypothesisfunction(g,W{i},b{i});
-                [g,~] = self.sigmoid(h);
+                [g,~] = self.actFCN(h,i);
             end
        end
 
@@ -126,11 +128,11 @@ classdef Propagator < handle
            I = self.Ibatch;
            nLy = self.nLayers;
            a = cell(nLy,1);
-           a{1} = x(1:I,:)+2;
+           a{1} = x(1:I,:);
            for i = 2:nLy
                g_prev = a{i-1};
                h = self.hypothesisfunction(g_prev,W{i-1},b{i-1});
-               [g,~] = self.sigmoid(h);
+               [g,~] = self.actFCN(h,i);
                a{i} = g;
            end
            self.a_fcn = a;
@@ -146,7 +148,7 @@ classdef Propagator < handle
            gradW = cell(nLy-1,1);
            gradb = cell(nLy-1,1);
            for k = nLy:-1:2
-               [~,a_der] = self.sigmoid(a{k}); 
+               [~,a_der] = self.actFCN(a{k},k); 
                if k == nLy
                    [~,t1] = self.costFunction(y(1:I,:),a{end});  
                    delta{k} = t1.*a_der;
@@ -185,9 +187,32 @@ classdef Propagator < handle
                 case 'l2'
                     for i = 1:size(y,2)
                         c = ((yp(:,i)-y(:,i)).^2);
-                        J = J + mean(c);      
+                        J = J + mean(c);
                     end
                     gc = (yp-y);
+                otherwise
+                    msg = [type,' is not a valid cost function'];
+                    error(msg)
+            end
+       end
+
+       function [g,g_der] = actFCN(self,z,k)
+            % OJO amb com estic usant les derivades
+            if k == self.nLayers
+                type = 'sigmoid';
+            else
+                type = self.activationFCNtype;
+            end
+            switch type 
+                case 'sigmoid'
+                    g = 1./(1+exp(-z));
+                    g_der = z.*(1-z);
+                case 'ReLU'
+                    g = gt(z,0).*z;
+                    g_der = gt(z,0)./z;
+                otherwise
+                    msg = [type,' is not a valid activation function'];
+                    error(msg)
             end
         end
     end
@@ -196,11 +221,5 @@ classdef Propagator < handle
         function h = hypothesisfunction(X,W,b)
           h = X*W + b;
         end     
-
-        function [g,g_der] = sigmoid(z)
-            % OJO amb com estic usant la derivada de la sigmoid
-            g = 1./(1+exp(-z));
-            g_der = z.*(1-z);
-        end
     end  
 end
