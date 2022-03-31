@@ -7,7 +7,7 @@ close all;
 %% Initialization of hyperparameters
 % Data
 pol_deg         = 1;  
-testratio       = 0; 
+testratio       = 20;  %
 
 % Network
 lambda          = 0;
@@ -29,14 +29,14 @@ data1 = Data(file,testratio,pol_deg);
 %load('Test4circles1.mat')
 
 %% Create Network Object
-hiddenlayers = [4,8];
+hiddenlayers = [3,3,32,100];
 net_structure           = [data1.nFeatures,hiddenlayers,data1.nLabels];      
 n.lambda                = lambda;
 n.Net_Structure         = net_structure;
 n.data                  = data1;
 n.prop                  = 'backprop';
 n.costFunction          = '-loglikelihood';
-n.activationFunction    = 'sigmoid';
+n.activationFunction    = 'tanh';
 network = Network(n);
 
 %% Create a trainer object

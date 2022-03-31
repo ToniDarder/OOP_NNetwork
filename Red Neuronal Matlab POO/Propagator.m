@@ -210,6 +210,9 @@ classdef Propagator < handle
                 case 'ReLU'
                     g = gt(z,0).*z;
                     g_der = gt(z,0);
+                case 'tanh'
+                    g = (exp(z)-exp(-z))./(exp(z)+exp(-z));
+                    g_der = (1-z.^2);
                 otherwise
                     msg = [type,' is not a valid activation function'];
                     error(msg)

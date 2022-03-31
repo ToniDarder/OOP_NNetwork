@@ -66,7 +66,7 @@ classdef SGD_Optimizer < Trainer
                         e = e/2;
                         funcount = funcount + 1;
                     end
-                    e = 10*e; 
+                    e = 5*e; 
                 case 'fminbnd'
                     xnew = @(e1) x - e1*grad;
                     f = @(e1) F(xnew(e1));
@@ -80,7 +80,7 @@ classdef SGD_Optimizer < Trainer
            self.batchSize = 100;
            self.optTolerance = 10^-8;
            self.MaxFunctionEvaluations = 5000;    
-           self.lSearchtype = 'dynamic';
+           self.lSearchtype = 'static';
         end 
         
         function displayIter(self,iter,funcount,x,f,opt,state)
