@@ -63,7 +63,7 @@ classdef SGD_Optimizer < Trainer
                 case 'dynamic'
                     f = fOld;
                     xnew = x;
-                    while f >= 1*(fOld - e*(grad*grad'))
+                    while f >= 1.001*(fOld - e*(grad*grad'))
                         xnew = x - e*grad;
                         [f,~] = F(xnew);
                         e = e/2;

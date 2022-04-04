@@ -37,8 +37,8 @@ n.lambda                = lambda;
 n.Net_Structure         = net_structure;
 n.data                  = data1;
 n.prop                  = 'backprop';
-n.costFunction          = '-loglikelihoodZ';
-n.activationFunction    = 'tanh';
+n.costFunction          = '-loglikelihood';
+n.activationFunction    = 'ReLU';
 network = Network(n);
 
 %% Create a trainer object
@@ -80,4 +80,10 @@ optimizer       = Trainer.create(t);
 %     end
 % end
 
-
+% softmax
+% Kernel trick
+% Analysis batch size ,lambda size
+% Overfitting, data size
+% AutoEncoder vs PCA
+% DataSet images
+% Convolutional*
