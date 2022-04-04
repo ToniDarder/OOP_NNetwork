@@ -20,7 +20,7 @@ classdef SGD_Optimizer < Trainer
             self.batchSize = s.batchsize;
             self.optTolerance = s.optTolerance;
             self.MaxFunctionEvaluations = s.maxevals;
-            self.lSearchtype = s.learningType;
+            self.lSearchtype = 'static';
         end
         
         function train(self)
@@ -78,6 +78,10 @@ classdef SGD_Optimizer < Trainer
             end
             x = xnew;
         end     
+
+        function setSolverOptions(self)
+           
+        end 
         
         function displayIter(self,iter,funcount,x,f,opt,state)
             if self.isDisplayed == true

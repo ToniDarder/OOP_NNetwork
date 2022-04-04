@@ -105,7 +105,8 @@ classdef Data < handle
         function loadData(self,FN)
             f = fullfile('Datasets', FN);
             data = load(f);
-            feat = input('Features to be used: ');
+            fprintf('Features to be used (1:%d):',(size(data,2)-1))
+            feat = input(' ');
             x = data(:, feat);
             ydata = data(:, end);
             y = zeros(length(ydata),max(ydata));

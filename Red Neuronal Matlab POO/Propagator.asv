@@ -183,8 +183,8 @@ classdef Propagator < handle
                     h = self.hypothesisfunction(a{end-1},W{end},b{end});
                     k = self.nLayers;
                     c = (1-y).*-log(1-self.actFCN(h,k)) + y.*-log(yp);
-                    J = sum(mean(c,1));                        
-                    gc = (1-y)./(1-self.actFCN(h,k)) + y./(-self.actFCN(h,k));
+                    J = mean(c,);                        
+                    gc = (1-y)./(1-yp) + y./(-yp);
                 case '-loglikelihood'
                     for i = 1:size(y,2)
                         c = (1-y(:,i)).*-log(1-yp(:,i)) + y(:,i).*-log(yp(:,i));
