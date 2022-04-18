@@ -23,7 +23,7 @@ classdef Plotter < handle
            X = self.data.Xtrain;
            nF = size(X,2);
            nPL = self.neuronsPerLayer;
-           n_pts = 30;
+           n_pts = 100;
            graphzoom = 1.5;
            x = createMesh();
            h = self.computeHeights(x(:,1),x(:,2),n_pts,nF,W,b);
@@ -42,16 +42,14 @@ classdef Plotter < handle
                    mymap = colormaps();
                    for i = 1:nPL(end)
                        hold on
-                       h(i) = axes;
+                       ha(i) = axes;
                        im{i} = imagesc(x(:,1),x(:,2),h(:,:,end+1-i)');
-                       im{i}.AlphaData = .5;
-                       colormap(h(i),mymap{i})
-                       if i > 1
-                           set(h(i),'color','none','visible','off')
-                       end
-                       set(h(i),'ydir','normal');
+                       im{i}.AlphaData = .3;                      
+                       colormap(ha(i),mymap{i})
+                       set(ha(i),'color','none','visible','off')
+                       set(ha(i),'ydir','normal');
                    end
-                   linkaxes(h)
+                   linkaxes(ha)
            end  
            hold on
            title('Contour 0')
@@ -67,26 +65,23 @@ classdef Plotter < handle
                x = [x1,x2];
            end
            function mymap = colormaps()
-               colors = [0,0,1;   % b
-                         0,1,0;   % g
-                         1,0,0;   % r
-                         0,1,1;   % c
-                         1,0,1;   % m
-                         1,1,0;   % y
-                         0,0,0];  % k
-               colors = 0.45*colors; 
+               colors = [1,0.3,0.3;   % r
+                         0.3,1,0.3;   % g
+                         0.3,0.3,1;   % b                         
+                         0.3,1,1;     % c
+                         1,0.3,1;     % m
+                         1,1,0.3;     % y
+                         0.3,0.3,0.3];% k
                mymap = cell(size(self.data.Ytrain,2),1);
                n = 100;
-               grey = linspace(1,1,n/2)';
-               w = [grey,grey,grey];
+               w = ones(n/2,3);
                nLb = size(self.data.Ytrain,2);     
                for k = 1:nLb
-                   mymap{k} = zeros(n/2,3);
-                   mymap{k}(1:n/2,:) = w;
+                   mymap{k} = zeros(n,3);
                    r = linspace(1,colors(k,1),n/2)';
                    g = linspace(1,colors(k,2),n/2)';
                    bl = linspace(1,colors(k,3),n/2)';
-                   mymap{k}(51:100,:) = [r,g,bl];
+                   mymap{k} = [w;r,g,bl];
                end
            end
         end

@@ -38,7 +38,7 @@ n.Net_Structure         = net_structure;
 n.data                  = data1;
 n.prop                  = 'backprop';
 n.costFunction          = '-loglikelihoodZ';
-n.activationFunction    = 'tanh';
+n.activationFunction    = 'sigmoid';
 network = Network(n);
 
 %% Create a trainer object
@@ -46,7 +46,7 @@ t               = n;
 t.isDisplayed   = true;
 t.network       = network;
 t.lr            = learningRate;
-t.type          = 'SGD';
+t.type          = 'fmin';
 t.batchsize     = 100;
 t.optTolerance  = 10^-5;
 t.maxevals      = 5000;

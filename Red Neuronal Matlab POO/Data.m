@@ -26,9 +26,9 @@ classdef Data < handle
         end
 
         function plotdata(self)
-            gscatter(self.Xdata(:,1),self.Xdata(:,2),self.Ydata,'rgbcmyk','xo*+.sd')
-            xlabel("X3");
-            ylabel("X4");
+            gscatter(self.Xdata(:,1),self.Xdata(:,2),self.Ydata,'rgbcmyk','*')
+            xlabel("");
+            ylabel("");
         end
 
         function drawCorrMatrix(self)

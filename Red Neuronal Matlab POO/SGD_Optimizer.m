@@ -39,7 +39,8 @@ classdef SGD_Optimizer < Trainer
             funcount = 0;
             [~,grad] = F(x0);            
             gnorm = norm(grad,2);
-            while gnorm > d && funcount <= self.MaxFunctionEvaluations 
+            f = 1;
+            while gnorm > d && funcount <= self.MaxFunctionEvaluations && f > 5*10^-2
                 if iter == -1
                     x = x0;
                     state = 'init';           
@@ -69,7 +70,7 @@ classdef SGD_Optimizer < Trainer
                         e = e/2;
                         funcount = funcount + 1;
                     end
-                    e = 5*e; 
+                    e = 10*e; 
                 case 'fminbnd'
                     xnew = @(e1) x - e1*grad;
                     f = @(e1) F(xnew(e1));
