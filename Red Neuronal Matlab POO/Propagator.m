@@ -180,22 +180,16 @@ classdef Propagator < handle
             yp = a{end};
             switch type
                 case '-loglikelihoodZ'
-                    h = self.hypothesisfunction(a{end-1},W{end},b{end});
-                    k = self.nLayers;
-                    c = (1-y).*-log(1-self.actFCN(h,k)) + y.*-log(yp);
-                    J = sum(mean(c,1));                        
-                    gc = (1-y)./(1-self.actFCN(h,k)) + y./(-self.actFCN(h,k));
+                    c = sum(y.*-log(yp),2);
+                    J = sum(c);                        
+                    gc = -sum(y./(yp),2);
                 case '-loglikelihood'
-                    for i = 1:size(y,2)
-                        c = (1-y(:,i)).*-log(1-yp(:,i)) + y(:,i).*-log(yp(:,i));
-                        J = J + mean(c);                        
-                    end
+                    c = (1-y).*-log(1-yp) + y.*-log(yp);
+                    J = sum(mean(c,1));                        
                     gc = (1-y)./(1-yp) + y./(-yp);
                 case 'l2'
-                    for i = 1:size(y,2)
-                        c = ((yp(:,i)-y(:,i)).^2);
-                        J = J + mean(c);
-                    end
+                    c = ((yp-y).^2);
+                    J = sum(mean(c,1));
                     gc = (yp-y);
                 otherwise
                     msg = [type,' is not a valid cost function'];
@@ -206,7 +200,7 @@ classdef Propagator < handle
        function [g,g_der] = actFCN(self,z,k)
             % OJO amb com estic usant les derivades
             if k == self.nLayers
-                type = 'sigmoid';
+                type = 'softmax';
             else
                 type = self.activationFCNtype;
             end
@@ -220,6 +214,20 @@ classdef Propagator < handle
                 case 'tanh'
                     g = (exp(z)-exp(-z))./(exp(z)+exp(-z));
                     g_der = (1-z.^2);
+                case 'softmax'
+                    g = (exp(z))./(sum(exp(z),2));
+                    l = size(z,2);
+                    g_der = zeros(size(z,1),l,l);                    
+                    for i = 1:l
+                        for j = 1:l
+                            if i == j
+                                delta = 1;
+                            else
+                                delta = 0;
+                            end
+                            g_der(:,i,j) = z(:,i).*(delta-z(:,j));
+                        end
+                    end
                 otherwise
                     msg = [type,' is not a valid activation function'];
                     error(msg)
