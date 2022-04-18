@@ -1,12 +1,12 @@
 %% Testing with a sample nn
 clc;
-clear; 
-close all; 
+clear;
+close all;
 %Iris_Test;
 
 %% Initialization of hyperparameters
 % Data
-pol_deg         = 1;  
+pol_deg         = 1;
 testratio       = 20;  %
 
 % Network
@@ -14,15 +14,15 @@ lambda          = 5*10^-2;
 
 %Trainer
 learningRate    = 0.01;
-    
+
 
 %% Loading of files/datasets
-datasets = load("datasets.mat").datasets; 
+datasets = load("datasets.mat").datasets;
 disp('Datsets available:')
 for i = 1:length(datasets)
     fprintf('%d - %s \n',i,datasets(i))
 end
-file = datasets(input('Choose: '));                                                                                                     
+file = datasets(input('Choose: '));
 
 %% Create the data object
 data1 = Data(file,testratio,pol_deg);
@@ -32,7 +32,7 @@ data1 = Data(file,testratio,pol_deg);
 
 %% Create Network Object
 hiddenlayers = [4,8];
-net_structure           = [data1.nFeatures,hiddenlayers,data1.nLabels];      
+net_structure           = [data1.nFeatures,hiddenlayers,data1.nLabels];
 n.lambda                = lambda;
 n.Net_Structure         = net_structure;
 n.data                  = data1;
@@ -80,4 +80,10 @@ optimizer       = Trainer.create(t);
 %     end
 % end
 
-
+% softmax
+% Kernel trick
+% Analysis batch size ,lambda size
+% Overfitting, data size
+% AutoEncoder vs PCA
+% DataSet images
+% Convolutional*
