@@ -18,10 +18,10 @@ classdef Propagator < handle
         a_fcn
         network
         nData
-        Ibatch
         propType
         costFCNtype
         activationFCNtype
+        batchSize
     end
     
     methods (Access = public)
@@ -40,9 +40,9 @@ classdef Propagator < handle
 
         function [J,gradient] = propagate(self,theta,I)
             if I == 0
-                self.Ibatch = length(self.data.Ytrain);
+                self.batchSize = length(self.data.Ytrain);
             else
-                self.Ibatch = I;
+                self.batchSize = I;
             end
             switch self.propType
                 case 'autodiff'
@@ -110,22 +110,22 @@ classdef Propagator < handle
            [W,b] = self.theta_to_Wb(theta);
            self.computeActivationFCN(W,b);
            a = self.a_fcn;
-           I = self.Ibatch;
+           I = self.batchSize;
            %g = a{end}(1:I,:);
            y =  self.data.Ytrain(1:I,:);
-           [J,~] = self.costFunction(y,a,W,b);
+           [J,~] = self.costFunction(y,a);
            self.loss = J;
        end
 
        function computeRegularizationTerm(self,theta)
-           nD = self.Ibatch;
+           nD = self.batchSize;
            r = 0.5/nD*(theta*theta');
            self.regularization = r;
        end
 
        function computeActivationFCN(self,W,b)
            x  = self.data.Xtrain;
-           I = self.Ibatch;
+           I = self.batchSize;
            nLy = self.nLayers;
            a = cell(nLy,1);
            a{1} = x(1:I,:);
@@ -139,24 +139,24 @@ classdef Propagator < handle
        end  
 
        function grad = backprop(self,theta)
-           [W,b]  = self.theta_to_Wb(theta);
+           [W,~]  = self.theta_to_Wb(theta);
            a = self.a_fcn;
            y = self.data.Ytrain;
            nLy = self.nLayers;
-           I = self.Ibatch;
+           I = self.batchSize;
            delta = cell(nLy,1);
            gradW = cell(nLy-1,1);
            gradb = cell(nLy-1,1);
-           for k = nLy:-1:2
+           for k = nLy:-1:2    
                [~,a_der] = self.actFCN(a{k},k); 
                if k == nLy
-                   [~,t1] = self.costFunction(y(1:I,:),a,W,b);  
+                   [~,t1] = self.costFunction(y(1:I,:),a);  
                    delta{k} = t1.*a_der;
-               else  
+               else                    
                    delta{k} = (W{k}*delta{k+1}')'.*a_der;
                end
-               gradW{k-1} = (1/length(y))*a{k-1}'*delta{k};
-               gradb{k-1} = (1/length(y))*sum(delta{k},1);
+               gradW{k-1} = (1/I)*a{k-1}'*delta{k};
+               gradb{k-1} = (1/I)*sum(delta{k},1);
            end
            grad = self.Wbgrad_to_gradvec(gradW,gradb);
        end
@@ -174,19 +174,19 @@ classdef Propagator < handle
            grad = [Wvec,bvec];
        end
 
-       function [J,gc] = costFunction(self,y,a,W,b)
+       function [J,gc] = costFunction(self,y,a)
             type = self.costFCNtype;
             J = 0;
             yp = a{end};
             switch type
-                case '-loglikelihoodZ'
+                case '-loglikelihood-softmax'
                     c = sum(y.*-log(yp),2);
-                    J = sum(c);                        
-                    gc = -sum(y./(yp),2);
-                case '-loglikelihood'
-                    c = (1-y).*-log(1-yp) + y.*-log(yp);
-                    J = sum(mean(c,1));                        
-                    gc = (1-y)./(1-yp) + y./(-yp);
+                    J = mean(c);                        
+                    gc = yp-y;
+                case '-loglikelihood-sigmoid'
+                    c = sum((1-y).*-log(1-yp) + y.*-log(yp),2);
+                    J = mean(c);                        
+                    gc = (yp-y)./(yp.*(1-yp));
                 case 'l2'
                     c = ((yp-y).^2);
                     J = sum(mean(c,1));
@@ -200,7 +200,7 @@ classdef Propagator < handle
        function [g,g_der] = actFCN(self,z,k)
             % OJO amb com estic usant les derivades
             if k == self.nLayers
-                type = 'softmax';
+                type = 'sigmoid';
             else
                 type = self.activationFCNtype;
             end
@@ -216,18 +216,7 @@ classdef Propagator < handle
                     g_der = (1-z.^2);
                 case 'softmax'
                     g = (exp(z))./(sum(exp(z),2));
-                    l = size(z,2);
-                    g_der = zeros(size(z,1),l,l);                    
-                    for i = 1:l
-                        for j = 1:l
-                            if i == j
-                                delta = 1;
-                            else
-                                delta = 0;
-                            end
-                            g_der(:,i,j) = z(:,i).*(delta-z(:,j));
-                        end
-                    end
+                    g_der = 1;                    
                 otherwise
                     msg = [type,' is not a valid activation function'];
                     error(msg)

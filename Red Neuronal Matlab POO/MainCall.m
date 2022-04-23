@@ -26,18 +26,15 @@ file = datasets(input('Choose: '));
 
 %% Create the data object
 data1 = Data(file,testratio,pol_deg);
-%load("iris_33_goodmin_10e-4.mat");
-%load('Test1iris.mat');
-%load('Test4circles1.mat')
 
 %% Create Network Object
-hiddenlayers = [4,8];
+hiddenlayers = [];
 net_structure           = [data1.nFeatures,hiddenlayers,data1.nLabels];
 n.lambda                = lambda;
 n.Net_Structure         = net_structure;
 n.data                  = data1;
 n.prop                  = 'backprop';
-n.costFunction          = '-loglikelihoodZ';
+n.costFunction          = '-loglikelihood-sigmoid';
 n.activationFunction    = 'sigmoid';
 network = Network(n);
 
@@ -48,8 +45,8 @@ t.network       = network;
 t.lr            = learningRate;
 t.type          = 'fmin';
 t.batchsize     = 100;
-t.optTolerance  = 10^-5;
-t.maxevals      = 5000;
+t.optTolerance  = 10^-4;
+t.maxevals      = 10000;
 t.learningType  = 'dynamic';
 optimizer       = Trainer.create(t);
 

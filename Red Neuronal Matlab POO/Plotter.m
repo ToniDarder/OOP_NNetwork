@@ -24,13 +24,15 @@ classdef Plotter < handle
            nF = size(X,2);
            nPL = self.neuronsPerLayer;
            n_pts = 100;
-           graphzoom = 1.5;
+           graphzoom = 1;
            x = createMesh();
            h = self.computeHeights(x(:,1),x(:,2),n_pts,nF,W,b);
            figure(10)
            clf(10)     
            colorsc = ['r','g','b','c','m','y','k'];
-           colorsc = fliplr(colorsc(1:size(self.data.Ytrain,2)));
+           colorsc = fliplr(colorsc(1:self.data.nLabels));
+           colorRGB = [1,0,0;0,1,0;0,0,1;0,1,1;1,0,1;1,1,0;0,0,0];
+           colorRGB = flipud(colorRGB(1:self.data.nLabels,:));           
            switch type
                case 'contour'
                    for i = 1:nPL(end)
@@ -50,6 +52,23 @@ classdef Plotter < handle
                        set(ha(i),'ydir','normal');
                    end
                    linkaxes(ha)
+               case 'filledS'
+                   [~,I] = max(h,[],3);
+                   rgb = zeros(n_pts,n_pts,3);
+                   for i = 1:n_pts
+                       for j = 1:n_pts
+                           for f = 1:nPL(end)                              
+                               if I(i,j) == f
+                                   rgb(j,i,:) = colorRGB(f,:);
+                               end
+                           end
+                       end
+                   end
+                   RI = imref2d(size(I));
+                   RI.XWorldLimits = [min(X(:,1)) max(X(:,1))];
+                   RI.YWorldLimits = [min(X(:,2)) max(X(:,2))];
+                   imshow(rgb,RI)
+                   alpha(0.3);
            end  
            hold on
            title('Contour 0')

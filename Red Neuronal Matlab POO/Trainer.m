@@ -37,9 +37,8 @@ classdef Trainer < handle
 
         function [J,g] = costFunction(self,x,I)
             theta   = x;
-            Ibatch  = I;
             net     = self.network;
-            net.computeCost(theta,Ibatch)
+            net.computeCost(theta,I)
             J = net.cost;
             g = net.gradient;
         end

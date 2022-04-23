@@ -4,30 +4,30 @@ classdef Fminunc_Optimizer < Trainer
     end
 
     properties (Access = private)
-
+        opt
     end
 
     methods(Access = public)
         function self = Fminunc_Optimizer(s)
             self.init(s);
+            self.opt = self.setSolverOptions(s);
         end
 
         function train(self)
-            opt = self.setSolverOptions();
             x0  = self.network.theta0;
             F = @(theta) self.costFunction(theta,0);
-            fminunc(F,x0,opt); 
+            fminunc(F,x0,self.opt); 
         end
     end
 
     methods(Access = private)
 
-        function opt = setSolverOptions(self)
+        function opt = setSolverOptions(self,s)
            opt = optimoptions(@fminunc);
            opt.SpecifyObjectiveGradient = true;
            opt.Algorithm = 'quasi-newton';
-           opt.StepTolerance = 10^-6;
-           opt.MaxFunctionEvaluations = 3000;              
+           opt.StepTolerance = s.optTolerance;
+           opt.MaxFunctionEvaluations = s.maxevals; 
            if self.isDisplayed == true
                 args = [];
                 opt.Display = 'iter';
@@ -39,13 +39,13 @@ classdef Fminunc_Optimizer < Trainer
         function stop = myoutput(self,x,optimvalues,state,args)
             stop = false;
             f = optimvalues.fval;
-            opt.epsilon = optimvalues.stepsize;
-            opt.gnorm = optimvalues.firstorderopt;
+            opti.epsilon = optimvalues.stepsize;
+            opti.gnorm = optimvalues.firstorderopt;
             iter = optimvalues.iteration;
             if iter == 0
-                opt.epsilon = 1;
+                opti.epsilon = 1;
             end
-            self.storeValues(x,f,state,opt);
+            self.storeValues(x,f,state,opti);
             self.plotMinimization(iter);                                
         end
     end

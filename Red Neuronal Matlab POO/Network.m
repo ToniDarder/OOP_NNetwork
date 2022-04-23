@@ -39,14 +39,14 @@ classdef Network < handle
            self.W = zeros(1,nW);
            self.b = zeros(1,nb);
            th0 = [self.W,self.b];
-           self.theta0 = (th0+rand([1,nW+nb])+10^-4)*10^(0);
+           self.theta0 = (th0+rand([1,nW+nb])+10^-2)*10^(0);
        end
 
        function h = getOutput(self,X)
             h = self.propagator.compute_last_H(X,self.theta_m);
        end
        
-       function computeCost(self,theta,I) 
+       function computeCost(self,theta,I)
            self.theta = theta;
            [self.W,self.b] = self.propagator.theta_to_Wb(self.theta);
            [J,grad] = self.propagator.propagate(theta,I); 
