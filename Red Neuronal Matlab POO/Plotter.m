@@ -11,22 +11,20 @@ classdef Plotter < handle
 
     methods (Access = public)
 
-        %HERE
-
         function self = Plotter(init,P)
             self.data = init.data;
             self.neuronsPerLayer = init.Net_Structure;
             self.propagator = P;
         end
 
-        function plotBoundary(self,W,b,type) 
+        function plotBoundary(self,layer,type) 
            X = self.data.Xtrain;
            nF = size(X,2);
            nPL = self.neuronsPerLayer;
            n_pts = 100;
            graphzoom = 1;
            x = createMesh();
-           h = self.computeHeights(x(:,1),x(:,2),n_pts,nF,W,b);
+           h = self.computeHeights(x(:,1),x(:,2),n_pts,nF,layer);
            figure(10)
            clf(10)     
            colorsc = ['r','g','b','c','m','y','k'];
@@ -105,16 +103,16 @@ classdef Plotter < handle
            end
         end
 
-        function plotNetworkStatus(self,W)      
+        function plotNetworkStatus(self,layer)      
             NPL = self.neuronsPerLayer;
             nLy = length(NPL);
             neurons = cell(max(NPL),nLy);
             for i = 1:nLy-1
                 if i == 1
-                    maxTH = max(W{i}(:));
+                    maxTH = max(layer{i}.W(:));
                 else
-                    if maxTH < max(W{i}(:))
-                        maxTH = max(W{i}(:));
+                    if maxTH < max(layer{i}.W(:))
+                        maxTH = max(layer{i}.W(:));
                     end
                 end
             end
@@ -152,7 +150,7 @@ classdef Plotter < handle
                     neuronb = neurons{i,j};
                     for k = 1:NPL(i+1)
                         neuronf = neurons{i+1,k};
-                        wth = abs(W{i}(j,k)/maxTH);
+                        wth = abs(layer{i}.W(j,k)/maxTH);
                         lw = 3*wth;
                         idx = round(wth*100);
                         if idx == 0
@@ -167,17 +165,16 @@ classdef Plotter < handle
             hold off
         end
 
-        function drawConfusionMat(self,W,bm)
+        function drawConfusionMat(self,layer)
             targets = self.data.Ytest;
             x = self.data.Xtest;
-            nPL = self.neuronsPerLayer;
-            outputs = self.propagator.compute_last_H(x,W,bm);
+            outputs = self.propagator.compute_last_H(x,layer);
             plotconfusion(targets',outputs')
         end
     end
 
     methods (Access = private)
-        function h_3D = computeHeights(self,x1,x2,n_pts,nF,W,bm)
+        function h_3D = computeHeights(self,x1,x2,n_pts,nF,layer)
            nPL = self.neuronsPerLayer;
            X_test = zeros(n_pts,nF,n_pts);
            h = zeros(n_pts*nPL(end),n_pts);
@@ -186,7 +183,7 @@ classdef Plotter < handle
                x2_aux = ones(n_pts,1)*x2(i);
                xdata_test = [x1 , x2_aux];
                X_test(:,:,i) = xdata_test;
-               h(:,i) = reshape(self.propagator.compute_last_H(X_test(:,:,i),W,bm),[n_pts*nPL(end),1]);
+               h(:,i) = reshape(self.propagator.compute_last_H(X_test(:,:,i),layer),[n_pts*nPL(end),1]);
            end
            for j = 1:nPL(end)
                h_3D(:,:,j) = h((j-1)*n_pts+1:j*n_pts,:);

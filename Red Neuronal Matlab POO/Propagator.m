@@ -38,7 +38,7 @@ classdef Propagator < handle
             self.activationFCNtype = init.activationFunction;
         end
 
-        function [J,gradient] = propagate(self,theta,I)
+        function [J,gradient] = propagate(self,layer,I)
             if I == 0
                 self.batchSize = length(self.data.Ytrain);
             else
@@ -46,8 +46,8 @@ classdef Propagator < handle
             end
             switch self.propType
                 case 'autodiff'
-                    th = dlarray(theta);
-                    j = @(theta) self.f_adiff(theta);
+                    th = dlarray(layer);
+                    j = @(theta) self.f_adiff(layer);
                     [j_e,g_e] = dlfeval(j,th);
                     gradient = extractdata(g_e);   
                     J = extractdata(j_e); 
@@ -55,75 +55,61 @@ classdef Propagator < handle
                     self.loss = extractdata(self.loss);
                     self.regularization = extractdata(self.regularization);
                 case 'backprop'
-                    self.forwardprop(theta);
+                    self.forwardprop(layer);
                     J = self.cost;
-                    gradient = self.backprop(theta);
+                    gradient = self.backprop(layer);
             end
         end       
 
-       function g = compute_last_H(self,X,W,b)
-            h = self.hypothesisfunction(X,W{1},b{1});
+       function g = compute_last_H(self,X,layer)
+            h = self.hypothesisfunction(X,layer{1}.W,layer{1}.b);
             [g,~] = self.actFCN(h,1);
             for i = 2:self.nLayers-1
-                h = self.hypothesisfunction(g,W{i},b{i});
+                h = self.hypothesisfunction(g,layer{i}.W,layer{i}.b);
                 [g,~] = self.actFCN(h,i);
             end
-       end
-
-       function [W_m,b_m] = theta_to_Wb(self,thetavec)
-           nL = self.nLayers;
-           nPL = self.neuronsPerLayer;
-           Wvec = thetavec(1:end-sum(nPL(2:end)));
-           bvec = thetavec(end-sum(nPL(2:end))+1:end);
-           W_m = cell(nL-1,1);
-           b_m = cell(nL-1,1);
-           lastW = 0;
-           lastb = 0;
-           for i = 2:nL
-               aux = reshape(Wvec(lastW+1:(lastW+nPL(i)*nPL(i-1))),[nPL(i-1),nPL(i)]);
-               W_m{i-1} = aux; 
-               b_m{i-1} = bvec(lastb+1:lastb+nPL(i));
-               lastW = lastW + nPL(i)*nPL(i-1);
-               lastb = lastb + nPL(i);
-           end
-       end        
+       end      
     end
 
     methods (Access = private)
 
-       function [J,grad] = f_adiff(self,theta)         
-           self.forwardprop(theta);
+        % ARREGLAR AUTODIFF
+       function [J,grad] = f_adiff(self,layer)         
+           self.forwardprop(layer);
            J = self.cost;
-           grad = dlgradient(J,theta);
+           grad = dlgradient(J,layer);
        end
 
-       function forwardprop(self,theta)
-           self.computeLossFunction(theta);
-           self.computeRegularizationTerm(theta);
+       function forwardprop(self,layer)
+           self.computeLossFunction(layer);
+           self.computeRegularizationTerm(layer);
            c = self.loss;
            r = self.regularization;
            l = self.lambda;
            self.cost = c + l*r;
        end
 
-       function computeLossFunction(self,theta)
-           [W,b] = self.theta_to_Wb(theta);
-           self.computeActivationFCN(W,b);
+       function computeLossFunction(self,layer)
+           self.computeActivationFCN(layer);
            a = self.a_fcn;
            I = self.batchSize;
-           %g = a{end}(1:I,:);
            y =  self.data.Ytrain(1:I,:);
            [J,~] = self.costFunction(y,a);
            self.loss = J;
        end
 
-       function computeRegularizationTerm(self,theta)
-           nD = self.batchSize;
-           r = 0.5/nD*(theta*theta');
+       function computeRegularizationTerm(self,layer)
+           I = self.batchSize;
+           nLy = self.nLayers;
+           s = 0;
+           for i = 2:nLy
+                s = s + layer{i-1}.theta*layer{i-1}.theta';
+           end
+           r = 0.5/I*s;
            self.regularization = r;
        end
 
-       function computeActivationFCN(self,W,b)
+       function computeActivationFCN(self,layer)
            x  = self.data.Xtrain;
            I = self.batchSize;
            nLy = self.nLayers;
@@ -131,17 +117,17 @@ classdef Propagator < handle
            a{1} = x(1:I,:);
            for i = 2:nLy
                g_prev = a{i-1};
-               h = self.hypothesisfunction(g_prev,W{i-1},b{i-1});
+               h = self.hypothesisfunction(g_prev,layer{i-1}.W,layer{i-1}.b);
                [g,~] = self.actFCN(h,i);
                a{i} = g;
            end
            self.a_fcn = a;
        end  
 
-       function grad = backprop(self,theta)
-           [W,~]  = self.theta_to_Wb(theta);
+       function grad = backprop(self,layer)
            a = self.a_fcn;
            y = self.data.Ytrain;
+           nPl = self.neuronsPerLayer;
            nLy = self.nLayers;
            I = self.batchSize;
            delta = cell(nLy,1);
@@ -153,25 +139,16 @@ classdef Propagator < handle
                    [~,t1] = self.costFunction(y(1:I,:),a);  
                    delta{k} = t1.*a_der;
                else                    
-                   delta{k} = (W{k}*delta{k+1}')'.*a_der;
+                   delta{k} = (layer{k}.W*delta{k+1}')'.*a_der;
                end
-               gradW{k-1} = (1/I)*a{k-1}'*delta{k};
-               gradb{k-1} = (1/I)*sum(delta{k},1);
+               gradW{k-1} = (1/I)*(a{k-1}'*delta{k} + self.lambda*layer{k-1}.W);
+               gradb{k-1} = (1/I)*(sum(delta{k},1) + self.lambda*layer{k-1}.b);
            end
-           grad = self.Wbgrad_to_gradvec(gradW,gradb);
-       end
-
-       function grad = Wbgrad_to_gradvec(self,gradW,gradb)
-           nLy = self.nLayers;
-           nPl = self.neuronsPerLayer;
-           bvec = [];
-           Wvec = [];
-           for i = 1:nLy-1
-               bvec = [bvec,gradb{i}];
-               aux = reshape(gradW{i},[1,nPl(i)*nPl(i+1)]);
-               Wvec = [Wvec,aux];
+           grad = [];
+           for i = 2:nLy
+               aux = [reshape(gradW{i-1},[1,nPl(i-1)*nPl(i)]),gradb{i-1}];
+               grad = [grad,aux];
            end
-           grad = [Wvec,bvec];
        end
 
        function [J,gc] = costFunction(self,y,a)
@@ -200,7 +177,7 @@ classdef Propagator < handle
        function [g,g_der] = actFCN(self,z,k)
             % OJO amb com estic usant les derivades
             if k == self.nLayers
-                type = 'sigmoid';
+                type = 'softmax';
             else
                 type = self.activationFCNtype;
             end

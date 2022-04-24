@@ -24,7 +24,7 @@ classdef SGD_Optimizer < Trainer
         end
         
         function train(self)
-           x0  = self.network.theta0; 
+           x0  = self.network.thetavec; 
            F = @(theta) self.costFunction(theta,self.batchSize); 
            self.optimize(F,x0);
         end 
@@ -34,7 +34,7 @@ classdef SGD_Optimizer < Trainer
         
         function optimize(self,F,x0)
             d        = self.optTolerance; 
-            epsilon  = self.learningRate;
+            epsilon0  = self.learningRate;
             iter     = -1; 
             funcount = 0;
             [~,grad] = F(x0);            
@@ -43,12 +43,13 @@ classdef SGD_Optimizer < Trainer
             while gnorm > d && funcount <= self.MaxFunctionEvaluations && f > 5*10^-2
                 if iter == -1
                     x = x0;
+                    epsilon = epsilon0;
                     state = 'init';           
                 else
                     state = 'iter';
                 end
                 [f,grad] = F(x);  
-                [epsilon,x,funcount] = self.lineSearch(x,grad,F,f,epsilon,funcount);                
+                [epsilon,x,funcount] = self.lineSearch(x,grad,F,f,epsilon,epsilon0,funcount);                
                 opt.epsilon = epsilon; opt.gnorm = gnorm;
                 self.displayIter(iter,funcount,x,f,opt,state);
                 gnorm = norm(grad,2);
@@ -57,10 +58,15 @@ classdef SGD_Optimizer < Trainer
             end 
         end
 
-        function [e,x,funcount] = lineSearch(self,x,grad,F,fOld,e,funcount)
-            switch self.lSearchtype
+        function [e,x,funcount] = lineSearch(self,x,grad,F,fOld,e,e0,funcount)
+            type = self.lSearchtype;
+            switch type
                 case 'static'
                     xnew = x - e*grad;
+                case 'decay'
+                    tau = 50;
+                    xnew = x - e*grad;
+                    e = e - 0.99*e0*30/tau;
                 case 'dynamic'
                     f = fOld;
                     xnew = x;
@@ -71,6 +77,16 @@ classdef SGD_Optimizer < Trainer
                         funcount = funcount + 1;
                     end
                     e = 10*e; 
+                    if funcount > 2000
+                        e=e;
+                    elseif e > 30
+                        e = 30;
+                        if f < 50 && f > 0.5
+                            e = 30/f;
+                        end
+                    end
+                    
+                    
                 case 'fminbnd'
                     xnew = @(e1) x - e1*grad;
                     f = @(e1) F(xnew(e1));
@@ -81,8 +97,8 @@ classdef SGD_Optimizer < Trainer
         end     
         
         function displayIter(self,iter,funcount,x,f,opt,state)
+            self.printValues(funcount,opt,f,iter)
             if self.isDisplayed == true
-                self.printValues(funcount,opt,f,iter)
                 self.storeValues(x,f,state,opt);
                 self.plotMinimization(iter);
             end

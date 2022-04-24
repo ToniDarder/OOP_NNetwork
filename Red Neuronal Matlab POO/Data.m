@@ -8,12 +8,12 @@ classdef Data < handle
         nData
         nFeatures
         nLabels
+        Xdata
+        Ydata 
     end
 
     properties (Access = private)
-        Xfullfeat        
-        Xdata
-        Ydata    
+        Xfullfeat           
         testPercentage
         polyGrade    
         X

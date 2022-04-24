@@ -14,7 +14,7 @@ classdef Fminunc_Optimizer < Trainer
         end
 
         function train(self)
-            x0  = self.network.theta0;
+            x0  = self.network.thetavec;
             F = @(theta) self.costFunction(theta,0);
             fminunc(F,x0,self.opt); 
         end
@@ -26,7 +26,8 @@ classdef Fminunc_Optimizer < Trainer
            opt = optimoptions(@fminunc);
            opt.SpecifyObjectiveGradient = true;
            opt.Algorithm = 'quasi-newton';
-           opt.StepTolerance = s.optTolerance;
+           opt.OptimalityTolerance = s.optTolerance;
+           opt.MaxIterations = s.maxevals*5;
            opt.MaxFunctionEvaluations = s.maxevals; 
            if self.isDisplayed == true
                 args = [];

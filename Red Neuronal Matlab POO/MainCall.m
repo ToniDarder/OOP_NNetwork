@@ -10,7 +10,7 @@ pol_deg         = 1;
 testratio       = 20;  %
 
 % Network
-lambda          = 5*10^-2;
+lambda          = 5*10^-1;
 
 %Trainer
 learningRate    = 0.01;
@@ -28,25 +28,25 @@ file = datasets(input('Choose: '));
 data1 = Data(file,testratio,pol_deg);
 
 %% Create Network Object
-hiddenlayers = [];
+hiddenlayers = [500,300];
 net_structure           = [data1.nFeatures,hiddenlayers,data1.nLabels];
 n.lambda                = lambda;
 n.Net_Structure         = net_structure;
 n.data                  = data1;
 n.prop                  = 'backprop';
-n.costFunction          = '-loglikelihood-sigmoid';
-n.activationFunction    = 'sigmoid';
+n.costFunction          = '-loglikelihood-softmax';
+n.activationFunction    = 'tanh';
 network = Network(n);
 
 %% Create a trainer object
 t               = n;
-t.isDisplayed   = true;
+t.isDisplayed   = false;
 t.network       = network;
 t.lr            = learningRate;
-t.type          = 'fmin';
+t.type          = 'SGD';
 t.batchsize     = 100;
-t.optTolerance  = 10^-4;
-t.maxevals      = 10000;
+t.optTolerance  = 10^-5;
+t.maxevals      = 2000;
 t.learningType  = 'dynamic';
 optimizer       = Trainer.create(t);
 
