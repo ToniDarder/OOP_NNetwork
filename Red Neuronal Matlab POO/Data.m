@@ -137,7 +137,7 @@ classdef Data < handle
         end
 
         function computefullvars(self,x,d)
-            % Builds a X matrix with more features using lineal combinations
+            %Builds a X matrix with more features using lineal combinations
 %             x1 = x(:,1); 
 %             x2 = x(:,2);
 %             cont = 1;
@@ -149,8 +149,8 @@ classdef Data < handle
 %             end
 %             self.Xtrain = Xful;
 %             self.Ytrain = self.Y;
-             self.Xtrain = self.X;
-             self.Ytrain = self.Y;
+            self.Xtrain = self.X;
+            self.Ytrain = self.Y;
         end 
     end
 end
