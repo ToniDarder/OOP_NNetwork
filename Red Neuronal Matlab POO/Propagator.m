@@ -99,13 +99,12 @@ classdef Propagator < handle
        end
 
        function computeRegularizationTerm(self,layer)
-           I = self.batchSize;
            nLy = self.nLayers;
            s = 0;
            for i = 2:nLy
                 s = s + layer{i-1}.theta*layer{i-1}.theta';
            end
-           r = 0.5/I*s;
+           r = 1/2*s;
            self.regularization = r;
        end
 
@@ -141,8 +140,8 @@ classdef Propagator < handle
                else                    
                    delta{k} = (layer{k}.W*delta{k+1}')'.*a_der;
                end
-               gradW{k-1} = (1/I)*(a{k-1}'*delta{k} + self.lambda*layer{k-1}.W);
-               gradb{k-1} = (1/I)*(sum(delta{k},1) + self.lambda*layer{k-1}.b);
+               gradW{k-1} = (1/I)*(a{k-1}'*delta{k}) + self.lambda*layer{k-1}.W;
+               gradb{k-1} = (1/I)*(sum(delta{k},1)) + self.lambda*layer{k-1}.b;
            end
            grad = [];
            for i = 2:nLy

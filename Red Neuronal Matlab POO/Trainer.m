@@ -12,6 +12,7 @@ classdef Trainer < handle
        figureOpt
        xIter
        delta
+       nPlot
     end
 
     methods (Access = public, Static)
@@ -65,23 +66,21 @@ classdef Trainer < handle
         end
 
         function plotMinimization(self,iter)
-            nIter = 50;
-            if mod(iter,nIter) == 0 && iter ~= 0
-                v = 0:nIter:iter;
-                self.plotCostRegErr(v,nIter);
-                self.plotEpsOpt(v,nIter)
-            end
-            if mod(iter,nIter*2) == 0 && self.network.data.nFeatures <= 2
+            nIter = self.nPlot;
+            v = 0:nIter:iter;
+            self.plotCostRegErr(v);
+            self.plotEpsOpt(v)
+            if self.network.data.nFeatures <= 2
                 self.network.plotBoundary('contour')
             end
         end  
 
-        function plotCostRegErr (self,v,nIter)
+        function plotCostRegErr (self,v)
             figure(self.figureCost)
             hold on
-            plot(v,self.costHist(2:nIter:end,1),'+-r')
-            plot(v,self.costHist(2:nIter:end,2),'+-b')
-            plot(v,self.costHist(2:nIter:end,3),'+-k')
+            plot(v,self.costHist(2:end,1),'+-r')
+            plot(v,self.costHist(2:end,2),'+-b')
+            plot(v,self.costHist(2:end,3),'+-k')
             legend('Fval','Loss','Regularization')
             xlabel('Iterations')
             ylabel('Function Values')
@@ -91,17 +90,17 @@ classdef Trainer < handle
             hold off
         end
 
-        function plotEpsOpt(self,v,nIter)
+        function plotEpsOpt(self,v)
             figure(self.figureOpt)
             subplot(2,1,1)
-            plot(v,self.optHist(2:nIter:end,1),'+-k')
+            plot(v,self.optHist(2:end,1),'+-k')
             yline(1,'-','Gtol Criteria')
             xlabel('Iterations')
             ylabel('Optimalty criteria')
             title('Gradient norm vs iter')
             xlim([10,inf])
             subplot(2,1,2)
-            plot(v,self.optHist(2:nIter:end,2),'+-g')
+            plot(v,self.optHist(2:end,2),'+-g')
             xlabel('Iterations')
             ylabel('Learning Rate')
             title('Step Size vs Iter')

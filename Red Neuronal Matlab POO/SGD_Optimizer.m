@@ -21,12 +21,15 @@ classdef SGD_Optimizer < Trainer
             self.optTolerance = s.optTolerance;
             self.MaxFunctionEvaluations = s.maxevals;
             self.lSearchtype = s.learningType;
+            self.nPlot = s.nPlot;
         end
         
         function train(self)
+           tic
            x0  = self.network.thetavec; 
            F = @(theta) self.costFunction(theta,self.batchSize); 
            self.optimize(F,x0);
+           toc
         end 
     end
     
@@ -40,11 +43,11 @@ classdef SGD_Optimizer < Trainer
             [~,grad] = F(x0);            
             gnorm = norm(grad,2);
             f = 1;
-            while gnorm > d && funcount <= self.MaxFunctionEvaluations && f > 5*10^-2
+            while gnorm > d && funcount <= self.MaxFunctionEvaluations 
                 if iter == -1
                     x = x0;
                     epsilon = epsilon0;
-                    state = 'init';           
+                    state = 'init';   
                 else
                     state = 'iter';
                 end
@@ -78,15 +81,13 @@ classdef SGD_Optimizer < Trainer
                     end
                     e = 10*e; 
                     if funcount > 2000
-                        e=e;
+                        e = e;
                     elseif e > 30
                         e = 30;
                         if f < 50 && f > 0.5
                             e = 30/f;
                         end
-                    end
-                    
-                    
+                    end                    
                 case 'fminbnd'
                     xnew = @(e1) x - e1*grad;
                     f = @(e1) F(xnew(e1));
@@ -99,8 +100,10 @@ classdef SGD_Optimizer < Trainer
         function displayIter(self,iter,funcount,x,f,opt,state)
             self.printValues(funcount,opt,f,iter)
             if self.isDisplayed == true
-                self.storeValues(x,f,state,opt);
-                self.plotMinimization(iter);
+                if mod(iter,self.nPlot) == 0 || iter == -1
+                    self.storeValues(x,f,state,opt);
+                    self.plotMinimization(iter);
+                end
             end
         end  
 

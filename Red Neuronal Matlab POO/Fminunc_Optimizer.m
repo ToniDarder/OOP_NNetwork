@@ -11,6 +11,7 @@ classdef Fminunc_Optimizer < Trainer
         function self = Fminunc_Optimizer(s)
             self.init(s);
             self.opt = self.setSolverOptions(s);
+            self.nPlot = s.nPlot;
         end
 
         function train(self)

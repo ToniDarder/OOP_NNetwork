@@ -10,11 +10,10 @@ pol_deg         = 1;
 testratio       = 20;  %
 
 % Network
-lambda          = 5*10^-1;
+lambda          = 5*10^-4;
 
 %Trainer
-learningRate    = 0.01;
-
+learningRate    = 1;
 
 %% Loading of files/datasets
 datasets = load("datasets.mat").datasets;
@@ -25,7 +24,8 @@ end
 file = datasets(input('Choose: '));
 
 %% Create the data object
-data1 = Data(file,testratio,pol_deg);
+%data1 = Data(file,testratio,pol_deg);
+data1 = load('data1BATCHANALY.mat').data1;
 
 %% Create Network Object
 hiddenlayers = [500,300];
@@ -44,10 +44,11 @@ t.isDisplayed   = false;
 t.network       = network;
 t.lr            = learningRate;
 t.type          = 'SGD';
-t.batchsize     = 100;
-t.optTolerance  = 10^-5;
-t.maxevals      = 2000;
-t.learningType  = 'dynamic';
+t.batchsize     = 500;
+t.optTolerance  = 1*10^-3;
+t.maxevals      = 20000;
+t.learningType  = 'static';
+t.nPlot         = 100;
 optimizer       = Trainer.create(t);
 
 %% Possible functions
@@ -63,12 +64,6 @@ optimizer       = Trainer.create(t);
 
 %% Suggestions
 
-% 1 -n Plot boundary in corrmatrix (investigar)
-% 2 -c PLotconections add colors
-% 3 - Try minibatch SGD for iris & larger datasets
-% 4 -c Plot cost,lineSearch (hbar),OptimalityCritera in subPlot for SGD and fmincon
-% 5 -c Change plotBoundary to colormapped
-
 % for i = 1:length(y)
 %     for j = 1:size(y,2)
 %         if y(i,j) ~= 0
@@ -77,10 +72,7 @@ optimizer       = Trainer.create(t);
 %     end
 % end
 
-% softmax
 % Kernel trick
 % Analysis batch size ,lambda size
 % Overfitting, data size
 % AutoEncoder vs PCA
-% DataSet images
-% Convolutional*
