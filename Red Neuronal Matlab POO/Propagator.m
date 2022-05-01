@@ -21,7 +21,8 @@ classdef Propagator < handle
         propType
         costFCNtype
         activationFCNtype
-        batchSize
+        Xb
+        Yb
     end
     
     methods (Access = public)
@@ -38,12 +39,9 @@ classdef Propagator < handle
             self.activationFCNtype = init.activationFunction;
         end
 
-        function [J,gradient] = propagate(self,layer,I)
-            if I == 0
-                self.batchSize = length(self.data.Ytrain);
-            else
-                self.batchSize = I;
-            end
+        function [J,gradient] = propagate(self,layer,Xb,Yb)
+            self.Xb = Xb;
+            self.Yb = Yb;
             switch self.propType
                 case 'autodiff'
                     th = dlarray(layer);
@@ -63,10 +61,10 @@ classdef Propagator < handle
 
        function g = compute_last_H(self,X,layer)
             h = self.hypothesisfunction(X,layer{1}.W,layer{1}.b);
-            [g,~] = self.actFCN(h,1);
+            [g,~] = self.actFCN(h,2);
             for i = 2:self.nLayers-1
                 h = self.hypothesisfunction(g,layer{i}.W,layer{i}.b);
-                [g,~] = self.actFCN(h,i);
+                [g,~] = self.actFCN(h,i+1);
             end
        end      
     end
@@ -89,31 +87,29 @@ classdef Propagator < handle
            self.cost = c + l*r;
        end
 
-       function computeLossFunction(self,layer)
-           self.computeActivationFCN(layer);
+       function computeLossFunction(self,layer)          
+           self.computeActivationFCN(self.Xb,layer);
            a = self.a_fcn;
-           I = self.batchSize;
-           y =  self.data.Ytrain(1:I,:);
-           [J,~] = self.costFunction(y,a);
+           [J,~] = self.costFunction(self.Yb,a);
            self.loss = J;
        end
 
        function computeRegularizationTerm(self,layer)
            nLy = self.nLayers;
            s = 0;
+           nth = 0;
            for i = 2:nLy
                 s = s + layer{i-1}.theta*layer{i-1}.theta';
+                nth = nth + length(layer{i-1}.theta);
            end
-           r = 1/2*s;
+           r = 1/(2*nth)*s;
            self.regularization = r;
        end
 
-       function computeActivationFCN(self,layer)
-           x  = self.data.Xtrain;
-           I = self.batchSize;
+       function computeActivationFCN(self,x,layer)
            nLy = self.nLayers;
            a = cell(nLy,1);
-           a{1} = x(1:I,:);
+           a{1} = x;
            for i = 2:nLy
                g_prev = a{i-1};
                h = self.hypothesisfunction(g_prev,layer{i-1}.W,layer{i-1}.b);
@@ -125,23 +121,23 @@ classdef Propagator < handle
 
        function grad = backprop(self,layer)
            a = self.a_fcn;
-           y = self.data.Ytrain;
+           y = self.Yb;
            nPl = self.neuronsPerLayer;
            nLy = self.nLayers;
-           I = self.batchSize;
+           m = length(y);
            delta = cell(nLy,1);
            gradW = cell(nLy-1,1);
            gradb = cell(nLy-1,1);
            for k = nLy:-1:2    
                [~,a_der] = self.actFCN(a{k},k); 
                if k == nLy
-                   [~,t1] = self.costFunction(y(1:I,:),a);  
+                   [~,t1] = self.costFunction(y,a);  
                    delta{k} = t1.*a_der;
                else                    
                    delta{k} = (layer{k}.W*delta{k+1}')'.*a_der;
                end
-               gradW{k-1} = (1/I)*(a{k-1}'*delta{k}) + self.lambda*layer{k-1}.W;
-               gradb{k-1} = (1/I)*(sum(delta{k},1)) + self.lambda*layer{k-1}.b;
+               gradW{k-1} = (1/m)*(a{k-1}'*delta{k}) + self.lambda*layer{k-1}.W;
+               gradb{k-1} = (1/m)*(sum(delta{k},1)) + self.lambda*layer{k-1}.b;
            end
            grad = [];
            for i = 2:nLy

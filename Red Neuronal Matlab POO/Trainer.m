@@ -5,7 +5,8 @@ classdef Trainer < handle
     end
     
     properties (Access = protected) 
-       network          
+       network  
+       data
        costHist
        optHist
        figureCost
@@ -36,10 +37,10 @@ classdef Trainer < handle
             self.isDisplayed  = s.isDisplayed;
         end
 
-        function [J,g] = costFunction(self,x,I)
+        function [J,g] = costFunction(self,x,Xb,Yb)
             theta   = x;
             net     = self.network;
-            net.computeCost(theta,I)
+            net.computeCost(theta,Xb,Yb)
             J = net.cost;
             g = net.gradient;
         end
@@ -79,8 +80,8 @@ classdef Trainer < handle
             figure(self.figureCost)
             hold on
             plot(v,self.costHist(2:end,1),'+-r')
-            plot(v,self.costHist(2:end,2),'+-b')
-            plot(v,self.costHist(2:end,3),'+-k')
+            plot(v,self.costHist(2:end,3),'+-b')
+            plot(v,self.costHist(2:end,2),'+-k')
             legend('Fval','Loss','Regularization')
             xlabel('Iterations')
             ylabel('Function Values')

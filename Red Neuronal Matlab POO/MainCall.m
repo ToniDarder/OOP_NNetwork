@@ -10,10 +10,10 @@ pol_deg         = 1;
 testratio       = 20;  %
 
 % Network
-lambda          = 5*10^-4;
+lambda          = 0.0;
 
 %Trainer
-learningRate    = 1;
+learningRate    = 0.1;
 
 %% Loading of files/datasets
 datasets = load("datasets.mat").datasets;
@@ -24,11 +24,11 @@ end
 file = datasets(input('Choose: '));
 
 %% Create the data object
-%data1 = Data(file,testratio,pol_deg);
-data1 = load('data1BATCHANALY.mat').data1;
+data1 = Data(file,testratio,pol_deg);
+%data1 = load('data1BATCHANALY.mat').data1;
 
 %% Create Network Object
-hiddenlayers = [500,300];
+hiddenlayers = [4,8];
 net_structure           = [data1.nFeatures,hiddenlayers,data1.nLabels];
 n.lambda                = lambda;
 n.Net_Structure         = net_structure;
@@ -40,7 +40,6 @@ network = Network(n);
 
 %% Create a trainer object
 t               = n;
-t.isDisplayed   = false;
 t.network       = network;
 t.lr            = learningRate;
 t.type          = 'SGD';
@@ -48,7 +47,8 @@ t.batchsize     = 500;
 t.optTolerance  = 1*10^-3;
 t.maxevals      = 20000;
 t.learningType  = 'static';
-t.nPlot         = 100;
+t.isDisplayed   = true;
+t.nPlot         = 20;
 optimizer       = Trainer.create(t);
 
 %% Possible functions

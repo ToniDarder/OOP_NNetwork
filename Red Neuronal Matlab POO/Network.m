@@ -37,17 +37,17 @@ classdef Network < handle
                 nW = nW + nPL(i-1)*nPL(i);
                 nb = nb + nPL(i);
            end      
-           %self.thetavec = (rand([1,nW+nb])*2 - 1 +10^-2);
-           self.thetavec = load('thetaguardo.mat').thetaguardo;
+           self.thetavec = (rand([1,nW+nb])*2 - 1 +10^-2);
+           %self.thetavec = load('thetaguardo.mat').thetaguardo;
        end
 
        function h = getOutput(self,X)
-            h = self.propagator.compute_last_H(X,self.theta_m);
+            h = self.propagator.compute_last_H(X,self.layer);
        end
        
-       function computeCost(self,theta,I)
+       function computeCost(self,theta,Xb,Yb)
            self.thetavec = theta;
-           [J,grad] = self.propagator.propagate(self.layer,I); 
+           [J,grad] = self.propagator.propagate(self.layer,Xb,Yb); 
            self.computeLoss();
            self.computeRegularization();
            self.cost = J; 

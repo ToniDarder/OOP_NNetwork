@@ -12,11 +12,12 @@ classdef Fminunc_Optimizer < Trainer
             self.init(s);
             self.opt = self.setSolverOptions(s);
             self.nPlot = s.nPlot;
+            self.data = s.data;
         end
 
         function train(self)
             x0  = self.network.thetavec;
-            F = @(theta) self.costFunction(theta,0);
+            F = @(theta) self.costFunction(theta,self.data.Xtrain,self.data.Ytrain);
             fminunc(F,x0,self.opt); 
         end
     end
