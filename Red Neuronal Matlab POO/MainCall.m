@@ -14,6 +14,7 @@ lambda          = 0.0;
 
 %Trainer
 learningRate    = 0.1;
+alpha           = 0.9;
 
 %% Loading of files/datasets
 datasets = load("datasets.mat").datasets;
@@ -24,11 +25,11 @@ end
 file = datasets(input('Choose: '));
 
 %% Create the data object
-data1 = Data(file,testratio,pol_deg);
-%data1 = load('data1BATCHANALY.mat').data1;
+%data1 = Data(file,testratio,pol_deg);
+data1 = load('data1BATCHANALY.mat').data1;
 
 %% Create Network Object
-hiddenlayers = [4,8];
+hiddenlayers = [500,300];
 net_structure           = [data1.nFeatures,hiddenlayers,data1.nLabels];
 n.lambda                = lambda;
 n.Net_Structure         = net_structure;
@@ -42,12 +43,13 @@ network = Network(n);
 t               = n;
 t.network       = network;
 t.lr            = learningRate;
+t.alpha         = alpha;
 t.type          = 'SGD';
-t.batchsize     = 500;
+t.batchsize     = 200;
 t.optTolerance  = 1*10^-3;
 t.maxevals      = 20000;
 t.learningType  = 'static';
-t.isDisplayed   = true;
+t.isDisplayed   = false;
 t.nPlot         = 20;
 optimizer       = Trainer.create(t);
 
@@ -76,3 +78,11 @@ optimizer       = Trainer.create(t);
 % Analysis batch size ,lambda size
 % Overfitting, data size
 % AutoEncoder vs PCA
+
+% xGD   = [5.8 8.5 18.9 41.8 86.7 198.1 904.9];
+% xNest = [0 24.4 15.4 9.37 18.3 34.2 135.2];
+% y     = [10 100 200 500 1000 2000 8000];
+% loglog(y,xGD,'b-o',y,xNest,'r-o')
+% legend('SGD','Nesterov')
+% xlabel('Batch Size')
+% ylabel('Computation time [s]')

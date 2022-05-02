@@ -37,8 +37,8 @@ classdef Network < handle
                 nW = nW + nPL(i-1)*nPL(i);
                 nb = nb + nPL(i);
            end      
-           self.thetavec = (rand([1,nW+nb])*2 - 1 +10^-2);
-           %self.thetavec = load('thetaguardo.mat').thetaguardo;
+           %self.thetavec = (rand([1,nW+nb])*2 - 1 +10^-2);
+           self.thetavec = load('thetaguardo.mat').thetaguardo;
        end
 
        function h = getOutput(self,X)
