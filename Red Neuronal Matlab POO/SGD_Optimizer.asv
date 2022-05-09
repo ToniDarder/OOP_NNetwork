@@ -50,9 +50,10 @@ classdef SGD_Optimizer < Trainer
             alarm = 0;
             [~,y_pred] = max(self.network.getOutput(self.data.Xtest),[],2);
             [~,y_target] = max(self.data.Ytest,[],2);
-            min_testError = mean(y_pred == y_target);
-            while alarm < 50
-                order = randperm(nD,nD);
+            min_testError = mean(y_pred ~= y_target);
+            while alarm < 10
+                %order = randperm(nD,nD);
+                order = 1:nD;
                 for i = 1:nB
                     [Xb,Yb] = self.createMinibatch(order,i);
                     if iter == -1
@@ -69,6 +70,9 @@ classdef SGD_Optimizer < Trainer
                     self.displayIter(epoch,iter,funcount,th,f,opt,state);
                     funcount = funcount + 1;
                     iter = iter + 1;
+                    if iter = 3000
+                        break
+                    end
                 end
                 [~,y_pred] = max(self.network.getOutput(self.data.Xtest),[],2);
                 [~,y_target] = max(self.data.Ytest,[],2);
@@ -76,10 +80,15 @@ classdef SGD_Optimizer < Trainer
                 if testError < min_testError
                     min_testError = testError;
                     alarm = 0;
+                elseif testError == min_testError
+                    alarm = alarm + 0.25;
                 else
                     alarm = alarm + 1;
                 end
                 epoch = epoch + 1;
+                if iter = 3000
+                        break
+                    end
             end 
         end
 

@@ -2,12 +2,12 @@ classdef Trainer < handle
 
     properties (Access = public)
         isDisplayed
+        costHist
     end
     
     properties (Access = protected) 
        network  
        data
-       costHist
        optHist
        figureCost
        figureOpt
@@ -78,10 +78,7 @@ classdef Trainer < handle
 
         function plotCostRegErr (self,v)
             figure(self.figureCost)
-            hold on
-            plot(v,self.costHist(2:end,1),'+-r')
-            plot(v,self.costHist(2:end,3),'+-b')
-            plot(v,self.costHist(2:end,2),'+-k')
+            semilogy(v,self.costHist(2:end,1),'+-r',v,self.costHist(2:end,3),'+-b',v,self.costHist(2:end,2),'+-k')
             legend('Fval','Loss','Regularization')
             xlabel('Iterations')
             ylabel('Function Values')

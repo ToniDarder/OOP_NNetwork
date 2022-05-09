@@ -7,6 +7,7 @@ classdef SGD_Optimizer < Trainer
     properties (Access = private)
        batchSize
        MaxFunctionEvaluations
+       MaxEpochs
        lSearchtype
        learningRate
        optTolerance
@@ -19,6 +20,7 @@ classdef SGD_Optimizer < Trainer
             self.learningRate = s.lr;
             self.optTolerance = s.optTolerance;
             self.MaxFunctionEvaluations = s.maxevals;
+            self.MaxEpochs = s.maxepochs;
             self.lSearchtype = s.learningType;
             self.nPlot = s.nPlot;
             self.data = s.data;
@@ -51,8 +53,10 @@ classdef SGD_Optimizer < Trainer
             [~,y_pred] = max(self.network.getOutput(self.data.Xtest),[],2);
             [~,y_target] = max(self.data.Ytest,[],2);
             min_testError = mean(y_pred ~= y_target);
-            while alarm < 50
+            gnorm = 1;
+            while epoch <= self.MaxEpochs && alarm < 10 && gnorm > self.optTolerance
                 order = randperm(nD,nD);
+                %order = 1:nD;
                 for i = 1:nB
                     [Xb,Yb] = self.createMinibatch(order,i);
                     if iter == -1
@@ -69,33 +73,29 @@ classdef SGD_Optimizer < Trainer
                     self.displayIter(epoch,iter,funcount,th,f,opt,state);
                     funcount = funcount + 1;
                     iter = iter + 1;
-                    if f <= 0.01 && iter > 100
-                        break
-                    end
                 end
                 [~,y_pred] = max(self.network.getOutput(self.data.Xtest),[],2);
                 [~,y_target] = max(self.data.Ytest,[],2);
                 testError = mean(y_pred ~= y_target);
                 if testError < min_testError
                     min_testError = testError;
+                    th_Opt = th;
                     alarm = 0;
                 elseif testError == min_testError
                     alarm = alarm + 0.25;
                 else
                     alarm = alarm + 1;
                 end
-                epoch = epoch + 1;
-                if f <= 0.01
-                    break
-                end
-            end 
+                epoch = epoch + 1;  
+            end
+            %self.network.thetavec = th_Opt;
         end
 
         function [e,x,funcount] = lineSearch(self,x,grad,F,fOld,e,e0,funcount,Xb,Yb)
             type = self.lSearchtype;
             switch type
                 case 'static'
-                    xnew = x - e*grad;
+                    xnew = x - e*grad/norm(grad,2);
                 case 'decay'
                     tau = 50;
                     xnew = x - e*grad;

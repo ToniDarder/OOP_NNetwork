@@ -45,7 +45,7 @@ t.network       = network;
 t.lr            = learningRate;
 t.alpha         = alpha;
 t.type          = 'SGD';
-t.batchsize     = 2000;
+t.batchsize     = 5;
 t.optTolerance  = 1*10^-3;
 t.maxevals      = 20000;
 t.learningType  = 'static';
@@ -79,9 +79,20 @@ optimizer       = Trainer.create(t);
 % Overfitting, data size
 % AutoEncoder vs PCA
 
-% xGD   = [5.8 8.5 41.8 86.7  904.9];
-% xNest = [0 24.4 15.4 9.37 18.3 34.2 135.2];
-% y     = [10 100 200 500 1000 2000 8000];
-% loglog(y,xGD,'b-o',y,xNest,'r-o')
+
+% fvGD   = [6.3*10^(-4)  5.51*10^(-3)  1.2*10^(-3) 1.3*10^(-3) 3.21*10^(-3) 1.26*10^(-2) 3.3*10^(-2) 3*10^(-1)];
+% teGD   = [0.80 0.883 0.923 0.817 0.767 0.755 0.725 0.717 0.681];
+% fvNest = [2.8*10^(-4) 3.2*10^(-4) 5.5*10^(-4) 8.4*10^(-4) 1.47*10^(-3) 8.16*10^(-3)];
+% teNest = [0.921 0.889 0.862 0.854 0.835 0.835];
+% y     = [1 5 10 50 100 200 500 1000 2000 4000 8000];
+% figure(1)
+% loglog(y,fvGD,'b-o',y(3:end),fvNest,'r-o')
+% legend('SGD','Nesterov')
 % xlabel('Batch Size')
-% ylabel('Computation time')
+% ylabel('Function value')
+% figure(2)
+% loglog(y,teGD,'b-o',y(3:end),teNest,'r-o')
+% legend('SGD','Nesterov')
+% xlabel('Batch Size')
+% ylabel('Test accuracy [%]')
+

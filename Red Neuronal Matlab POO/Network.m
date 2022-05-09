@@ -82,6 +82,7 @@ classdef Network < handle
                case 'lambda'
                     self.lambda = h.value;
                     self.propagator.lambda = self.lambda;
+                    self.computeInitialTheta();
            end
        end
    end
