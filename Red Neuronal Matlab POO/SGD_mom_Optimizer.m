@@ -52,9 +52,8 @@ classdef SGD_mom_Optimizer < Trainer
             [~,y_pred] = max(self.network.getOutput(self.data.Xtest),[],2);
             [~,y_target] = max(self.data.Ytest,[],2);
             min_testError = mean(y_pred ~= y_target);
-            while epoch <= 100
+            while epoch <= 500
                 order = randperm(nD,nD);
-                %order = 1:nD;
                 for i = 1:nB
                     [Xb,Yb] = self.createMinibatch(order,i);
                     if iter == -1
@@ -68,10 +67,13 @@ classdef SGD_mom_Optimizer < Trainer
                     [f,~] = F(th,Xb,Yb);  
                     [th,grad,v] = self.updateX(th,v,epsilon,self.alpha,F,Xb,Yb);                
                     gnorm = norm(grad,2);
-                    opt.epsilon = epsilon; opt.gnorm = gnorm;
-                    self.displayIter(epoch,iter,funcount,th,f,opt,state);
+                    opt.epsilon = epsilon*gnorm; opt.gnorm = gnorm;
+                    %self.displayIter(epoch,iter,funcount,th,f,opt,state);
                     funcount = funcount + 1;
                     iter = iter + 1;
+                    if toc > 120
+                        break
+                    end
                 end
                 [~,y_pred] = max(self.network.getOutput(self.data.Xtest),[],2);
                 [~,y_target] = max(self.data.Ytest,[],2);
@@ -85,13 +87,16 @@ classdef SGD_mom_Optimizer < Trainer
                     alarm = alarm + 1;
                 end
                 epoch = epoch + 1;
+                if toc > 120
+                    break
+                end
             end 
         end
 
         function [x,grad,v] = updateX(self,x,v,e,alpha,F,Xb,Yb)
             x_hat    = x + alpha*v;
             [~,grad] = F(x_hat,Xb,Yb);
-            v        = alpha*v - e*grad/norm(grad,2);
+            v        = alpha*v - e*grad;
             x        = x + v;     
         end     
         

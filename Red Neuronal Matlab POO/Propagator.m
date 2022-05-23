@@ -102,7 +102,7 @@ classdef Propagator < handle
                 s = s + layer{i-1}.theta*layer{i-1}.theta';
                 nth = nth + length(layer{i-1}.theta);
            end
-           r = 1/(2*nth)*s;
+           r = 1/(2)*s;
            self.regularization = r;
        end
 
@@ -172,7 +172,7 @@ classdef Propagator < handle
        function [g,g_der] = actFCN(self,z,k)
             % OJO amb com estic usant les derivades
             if k == self.nLayers
-                type = 'softmax';
+                type = 'sigmoid';
             else
                 type = self.activationFCNtype;
             end

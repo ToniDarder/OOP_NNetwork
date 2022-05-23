@@ -7,6 +7,7 @@ classdef SGD_Optimizer < Trainer
     properties (Access = private)
        batchSize
        MaxFunctionEvaluations
+       MaxEpochs
        lSearchtype
        learningRate
        optTolerance
@@ -19,6 +20,7 @@ classdef SGD_Optimizer < Trainer
             self.learningRate = s.lr;
             self.optTolerance = s.optTolerance;
             self.MaxFunctionEvaluations = s.maxevals;
+            self.MaxEpochs = s.maxepochs;
             self.lSearchtype = s.learningType;
             self.nPlot = s.nPlot;
             self.data = s.data;
@@ -51,7 +53,8 @@ classdef SGD_Optimizer < Trainer
             [~,y_pred] = max(self.network.getOutput(self.data.Xtest),[],2);
             [~,y_target] = max(self.data.Ytest,[],2);
             min_testError = mean(y_pred ~= y_target);
-            while alarm < 10
+            gnorm = 1;
+            while epoch <= self.MaxEpochs && alarm < 100000 && gnorm > self.optTolerance
                 %order = randperm(nD,nD);
                 order = 1:nD;
                 for i = 1:nB
@@ -66,11 +69,11 @@ classdef SGD_Optimizer < Trainer
                     [f,grad] = F(th,Xb,Yb);  
                     [epsilon,th,funcount] = self.lineSearch(th,grad,F,f,epsilon,epsilon0,funcount,Xb,Yb);                
                     gnorm = norm(grad,2);
-                    opt.epsilon = epsilon; opt.gnorm = gnorm;
+                    opt.epsilon = epsilon*gnorm; opt.gnorm = gnorm;
                     self.displayIter(epoch,iter,funcount,th,f,opt,state);
                     funcount = funcount + 1;
                     iter = iter + 1;
-                    if iter = 3000
+                    if f < 0.005 || toc > 600
                         break
                     end
                 end
@@ -79,6 +82,7 @@ classdef SGD_Optimizer < Trainer
                 testError = mean(y_pred ~= y_target);
                 if testError < min_testError
                     min_testError = testError;
+                    th_Opt = th;
                     alarm = 0;
                 elseif testError == min_testError
                     alarm = alarm + 0.25;
@@ -86,10 +90,10 @@ classdef SGD_Optimizer < Trainer
                     alarm = alarm + 1;
                 end
                 epoch = epoch + 1;
-                if iter = 3000
-                        break
-                    end
-            end 
+                if f < 0.005 || toc > 600
+                    break
+                end
+            end
         end
 
         function [e,x,funcount] = lineSearch(self,x,grad,F,fOld,e,e0,funcount,Xb,Yb)

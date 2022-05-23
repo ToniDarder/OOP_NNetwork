@@ -118,7 +118,7 @@ classdef Data < handle
                     end
                 end
             end
-            self.Xdata = x;
+            self.Xdata = (x-min(x,[],1))/(max(x,[],1)-min(x,[],1));
             self.Ydata = y;
             self.Xfullfeat = data(:,1:(end-1));
         end

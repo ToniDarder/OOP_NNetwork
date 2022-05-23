@@ -9,10 +9,10 @@ pol_deg         = 1;
 testratio       = 20;  
 
 % Network
-lambda          = 0.01;
+lambda          = 0.;
 
 %Trainer
-learningRate    = 0.1;
+learningRate    = 0.01;
 alpha           = 0.5;
 
 %% Loading of files/datasets
@@ -35,7 +35,7 @@ n.Net_Structure         = net_structure;
 n.data                  = data1;
 n.prop                  = 'backprop';
 n.costFunction          = '-loglikelihood-softmax';
-n.activationFunction    = 'tanh';
+n.activationFunction    = 'ReLU';
 network = Network(n);
 
 %% Create a trainer object
@@ -47,7 +47,7 @@ t.type          = 'SGD';
 t.batchsize     = 200;
 t.optTolerance  = 1*10^-6;
 t.maxevals      = 20000;
-t.maxepochs     = 50;
+t.maxepochs     = 100;
 t.learningType  = 'static';
 t.isDisplayed   = true;
 t.nPlot         = 40;

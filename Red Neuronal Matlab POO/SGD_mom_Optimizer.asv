@@ -14,7 +14,7 @@ classdef SGD_mom_Optimizer < Trainer
 
     methods(Access = public)
 
-        function self = SGD_Optimizer(s)
+        function self = SGD_mom_Optimizer(s)
             self.init(s)
             self.learningRate = s.lr;
             self.alpha        = s.alpha;
@@ -52,7 +52,7 @@ classdef SGD_mom_Optimizer < Trainer
             [~,y_pred] = max(self.network.getOutput(self.data.Xtest),[],2);
             [~,y_target] = max(self.data.Ytest,[],2);
             min_testError = mean(y_pred ~= y_target);
-            while alarm < 50
+            while epoch <= 100
                 order = randperm(nD,nD);
                 for i = 1:nB
                     [Xb,Yb] = self.createMinibatch(order,i);
@@ -65,9 +65,9 @@ classdef SGD_mom_Optimizer < Trainer
                         state = 'iter';
                     end
                     [f,~] = F(th,Xb,Yb);  
-                    [x,grad] = updateX(x,v,e,self.alpha,F);                
+                    [th,grad,v] = self.updateX(th,v,epsilon,self.alpha,F,Xb,Yb);                
                     gnorm = norm(grad,2);
-                    opt.epsilon = epsilon; opt.gnorm = gnorm;
+                    opt.epsilon = epsilon*gnorm; opt.gnorm = gnorm;
                     self.displayIter(epoch,iter,funcount,th,f,opt,state);
                     funcount = funcount + 1;
                     iter = iter + 1;
@@ -75,9 +75,11 @@ classdef SGD_mom_Optimizer < Trainer
                 [~,y_pred] = max(self.network.getOutput(self.data.Xtest),[],2);
                 [~,y_target] = max(self.data.Ytest,[],2);
                 testError = mean(y_pred ~= y_target);
-                if testError <= min_testError
+                if testError < min_testError
                     min_testError = testError;
                     alarm = 0;
+                elseif testError == min_testError
+                    alarm = alarm + 0.25;
                 else
                     alarm = alarm + 1;
                 end
@@ -85,9 +87,9 @@ classdef SGD_mom_Optimizer < Trainer
             end 
         end
 
-        function [x,grad] = updateX(self,x,v,e,alpha,F)
+        function [x,grad,v] = updateX(self,x,v,e,alpha,F,Xb,Yb)
             x_hat    = x + alpha*v;
-            [~,grad] = F(x_hat);
+            [~,grad] = F(x_hat,Xb,Yb);
             v        = alpha*v - e*grad;
             x        = x + v;     
         end     

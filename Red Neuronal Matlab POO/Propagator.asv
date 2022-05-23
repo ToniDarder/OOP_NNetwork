@@ -23,6 +23,7 @@ classdef Propagator < handle
         activationFCNtype
         Xb
         Yb
+        nTheta
     end
     
     methods (Access = public)
@@ -61,10 +62,10 @@ classdef Propagator < handle
 
        function g = compute_last_H(self,X,layer)
             h = self.hypothesisfunction(X,layer{1}.W,layer{1}.b);
-            [g,~] = self.actFCN(h,1);
+            [g,~] = self.actFCN(h,2);
             for i = 2:self.nLayers-1
                 h = self.hypothesisfunction(g,layer{i}.W,layer{i}.b);
-                [g,~] = self.actFCN(h,i);
+                [g,~] = self.actFCN(h,i+1);
             end
        end      
     end
@@ -104,6 +105,7 @@ classdef Propagator < handle
            end
            r = 1/(2*nth)*s;
            self.regularization = r;
+           self.nTheta = nth
        end
 
        function computeActivationFCN(self,x,layer)
@@ -136,8 +138,8 @@ classdef Propagator < handle
                else                    
                    delta{k} = (layer{k}.W*delta{k+1}')'.*a_der;
                end
-               gradW{k-1} = (1/m)*(a{k-1}'*delta{k}) + self.lambda*layer{k-1}.W;
-               gradb{k-1} = (1/m)*(sum(delta{k},1)) + self.lambda*layer{k-1}.b;
+               gradW{k-1} = (1/m)*(a{k-1}'*delta{k}) + 1/nth*self.lambda*layer{k-1}.W;
+               gradb{k-1} = (1/m)*(sum(delta{k},1)) + 1/nth*self.lambda*layer{k-1}.b;
            end
            grad = [];
            for i = 2:nLy
@@ -172,7 +174,7 @@ classdef Propagator < handle
        function [g,g_der] = actFCN(self,z,k)
             % OJO amb com estic usant les derivades
             if k == self.nLayers
-                type = 'softmax';
+                type = 'sigmoid';
             else
                 type = self.activationFCNtype;
             end

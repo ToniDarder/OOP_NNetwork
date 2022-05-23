@@ -33,12 +33,20 @@ classdef Network < handle
            nLayer = self.nLayers;
            nW     = 0;
            nb     = 0;
+           W      = [];
+           b      = [];
            for i = 2:nLayer
-                nW = nW + nPL(i-1)*nPL(i);
-                nb = nb + nPL(i);
+                if i ~= nLayer
+                    auxb = zeros([1,nPL(i)]) + 0.1;
+                else
+                    auxb = zeros([1,nPL(i)]) + 1/nPL(i);
+                end
+                u = (6/(nPL(i-1)+nPL(i)))^0.5;
+                auxW = (unifrnd(-u,u,[1,nPL(i-1)*nPL(i)]));
+                b = [b, auxb];
+                W = [W, auxW];
            end      
-           %self.thetavec = (rand([1,nW+nb])*2 - 1 +10^-2);
-           self.thetavec = load('thetaguardo.mat').thetaguardo;
+           self.thetavec = [W,b];
        end
 
        function h = getOutput(self,X)

@@ -56,7 +56,6 @@ classdef SGD_Optimizer < Trainer
             gnorm = 1;
             while epoch <= self.MaxEpochs && alarm < 10 && gnorm > self.optTolerance
                 order = randperm(nD,nD);
-                %order = 1:nD;
                 for i = 1:nB
                     [Xb,Yb] = self.createMinibatch(order,i);
                     if iter == -1
@@ -69,10 +68,13 @@ classdef SGD_Optimizer < Trainer
                     [f,grad] = F(th,Xb,Yb);  
                     [epsilon,th,funcount] = self.lineSearch(th,grad,F,f,epsilon,epsilon0,funcount,Xb,Yb);                
                     gnorm = norm(grad,2);
-                    opt.epsilon = epsilon; opt.gnorm = gnorm;
-                    self.displayIter(epoch,iter,funcount,th,f,opt,state);
+                    opt.epsilon = epsilon*gnorm; opt.gnorm = gnorm;
+                    %self.displayIter(epoch,iter,funcount,th,f,opt,state);
                     funcount = funcount + 1;
                     iter = iter + 1;
+%                     if toc > 120
+%                         break
+%                     end
                 end
                 [~,y_pred] = max(self.network.getOutput(self.data.Xtest),[],2);
                 [~,y_target] = max(self.data.Ytest,[],2);
@@ -82,20 +84,22 @@ classdef SGD_Optimizer < Trainer
                     th_Opt = th;
                     alarm = 0;
                 elseif testError == min_testError
-                    alarm = alarm + 0.25;
+                    alarm = alarm + 0.5;
                 else
                     alarm = alarm + 1;
                 end
-                epoch = epoch + 1;  
+                epoch = epoch + 1;
+%                 if toc > 120
+%                     break
+%                 end
             end
-            %self.network.thetavec = th_Opt;
         end
 
         function [e,x,funcount] = lineSearch(self,x,grad,F,fOld,e,e0,funcount,Xb,Yb)
             type = self.lSearchtype;
             switch type
                 case 'static'
-                    xnew = x - e*grad/norm(grad,2);
+                    xnew = x - e*grad;
                 case 'decay'
                     tau = 50;
                     xnew = x - e*grad;
