@@ -1,18 +1,18 @@
 classdef Trainer < handle
 
     properties (Access = public)
+        
         isDisplayed
         costHist
+        optHist
     end
     
     properties (Access = protected) 
-       network  
        data
-       optHist
+       network
        figureCost
        figureOpt
        xIter
-       delta
        nPlot
     end
 
@@ -21,11 +21,11 @@ classdef Trainer < handle
         function self = create(s)
            switch s.type
                case 'SGD'
-                   self = SGD_Optimizer(s);
-               case 'fmin'
-                   self = Fminunc_Optimizer(s);
-               case 'SGD_mom'
-                   self = SGD_mom_Optimizer(s);
+                   self = SGD(s);
+               case 'Fminunc'
+                   self = Fminunc(s);
+               case 'Nesterov'
+                   self = Nesterov(s);
            end
         end
     end
@@ -39,10 +39,9 @@ classdef Trainer < handle
 
         function [J,g] = costFunction(self,x,Xb,Yb)
             theta   = x;
-            net     = self.network;
-            net.computeCost(theta,Xb,Yb)
-            J = net.cost;
-            g = net.gradient;
+            self.network.computeCost(theta,Xb,Yb)
+            J = self.network.cost;
+            g = self.network.gradient;
         end
 
         function storeValues(self,x,f,state,opt)
@@ -69,8 +68,10 @@ classdef Trainer < handle
         function plotMinimization(self,iter)
             nIter = self.nPlot;
             v = 0:nIter:iter;
+            if iter > 0
             self.plotCostRegErr(v);
             self.plotEpsOpt(v)
+            end
             if self.network.data.nFeatures <= 2
                 self.network.plotBoundary('contour')
             end

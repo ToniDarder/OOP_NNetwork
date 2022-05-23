@@ -1,15 +1,15 @@
 classdef Network < handle
  
     properties (GetAccess = public, SetAccess = private)
+       data
        thetavec
        neuronsPerLayer
        nLayers
        lambda
-       data
        cost
-       gradient
        regularization
        loss
+       gradient
     end
 
     properties (Dependent)
@@ -30,19 +30,20 @@ classdef Network < handle
 
        function computeInitialTheta(self)
            nPL    = self.neuronsPerLayer;
-           nLayer = self.nLayers;
-           nW     = 0;
-           nb     = 0;
-           w      = [];
-           for i = 2:nLayer
-                nb = nb + nPL(i);
+           W      = [];
+           b      = [];
+           for i = 2:self.nLayers
+                if i ~= self.nLayers
+                    auxb = zeros([1,nPL(i)]) + 0.1;
+                else
+                    auxb = zeros([1,nPL(i)]) + 1/nPL(i);
+                end
                 u = (6/(nPL(i-1)+nPL(i)))^0.5;
-                aux = (unifrnd(-u,u,[1,nW]));
-                w = [w, aux];
+                auxW = (unifrnd(-u,u,[1,nPL(i-1)*nPL(i)]));
+                b = [b, auxb];
+                W = [W, auxW];
            end      
-           b = zeros([1,nb]) + 0.1;
            self.thetavec = [W,b];
-           %self.thetavec = load('thetaguardo.mat').thetaguardo;
        end
 
        function h = getOutput(self,X)

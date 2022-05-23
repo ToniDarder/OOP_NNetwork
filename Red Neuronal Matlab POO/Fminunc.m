@@ -1,18 +1,15 @@
-classdef Fminunc_Optimizer < Trainer
-    properties (Access = public)
-
-    end
+classdef Fminunc < Trainer
 
     properties (Access = private)
         opt
     end
 
     methods(Access = public)
-        function self = Fminunc_Optimizer(s)
+        function self = Fminunc(s)
             self.init(s);
-            self.opt = self.setSolverOptions(s);
+            self.opt   = self.setSolverOptions(s);
             self.nPlot = s.nPlot;
-            self.data = s.data;
+            self.data  = s.data;
         end
 
         function train(self)
@@ -27,24 +24,24 @@ classdef Fminunc_Optimizer < Trainer
         function opt = setSolverOptions(self,s)
            opt = optimoptions(@fminunc);
            opt.SpecifyObjectiveGradient = true;
-           opt.Algorithm = 'quasi-newton';
-           opt.OptimalityTolerance = s.optTolerance;
-           opt.MaxIterations = s.maxevals*5;
-           opt.MaxFunctionEvaluations = s.maxevals; 
+           opt.Algorithm                = 'quasi-newton';
+           opt.OptimalityTolerance      = s.optTolerance;
+           opt.MaxIterations            = s.maxevals*5;
+           opt.MaxFunctionEvaluations   = s.maxevals; 
            if self.isDisplayed == true
                 args = [];
-                opt.Display = 'iter';
+                opt.Display        = 'iter';
                 opt.CheckGradients = true;
-                opt.OutputFcn = @(theta,optimvalues,state)self.myoutput(theta,optimvalues,state,args);
+                opt.OutputFcn      = @(theta,optimvalues,state)self.myoutput(theta,optimvalues,state,args);
            end
         end 
 
         function stop = myoutput(self,x,optimvalues,state,args)
-            stop = false;
-            f = optimvalues.fval;
+            stop         = false;
+            f            = optimvalues.fval;
             opti.epsilon = optimvalues.stepsize;
-            opti.gnorm = optimvalues.firstorderopt;
-            iter = optimvalues.iteration;
+            opti.gnorm   = optimvalues.firstorderopt;
+            iter         = optimvalues.iteration;
             if iter == 0
                 opti.epsilon = 1;
             end

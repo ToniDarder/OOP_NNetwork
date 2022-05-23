@@ -8,21 +8,13 @@ classdef Propagator < handle
         regularization
         loss
         cost
-        gradient
     end
 
     properties (Access = private)
         data
-        neuronsPerLayer
-        nLayers
-        a_fcn
         network
-        nData
-        propType
-        costFCNtype
-        activationFCNtype
-        Xb
-        Yb
+        a_fcn
+        delta
     end
     
     methods (Access = public)
@@ -30,39 +22,21 @@ classdef Propagator < handle
         function self = Propagator(init)
             self.data = init.data;
             self.lambda = init.lambda;
-            self.neuronsPerLayer = init.Net_Structure;
-            self.nLayers = length(init.Net_Structure);
-            self.nData = length(init.data.Ytrain);
-            self.network = init.self;
-            self.propType = init.prop;
-            self.costFCNtype = init.costFunction;
-            self.activationFCNtype = init.activationFunction;
+            self.network = init.net;
         end
 
         function [J,gradient] = propagate(self,layer,Xb,Yb)
-            self.Xb = Xb;
-            self.Yb = Yb;
-            switch self.propType
-                case 'autodiff'
-                    th = dlarray(layer);
-                    j = @(theta) self.f_adiff(layer);
-                    [j_e,g_e] = dlfeval(j,th);
-                    gradient = extractdata(g_e);   
-                    J = extractdata(j_e); 
-                    self.cost = extractdata(self.cost);
-                    self.loss = extractdata(self.loss);
-                    self.regularization = extractdata(self.regularization);
-                case 'backprop'
-                    self.forwardprop(layer);
-                    J = self.cost;
-                    gradient = self.backprop(layer);
-            end
+            self.forwardprop(layer,Xb,Yb);
+            J = self.cost;
+            gradient = self.backprop(layer,Yb);
         end       
 
-       function g = compute_last_H(self,X,layer)
-            h = self.hypothesisfunction(X,layer{1}.W,layer{1}.b);
+       function g = compute_last_H(self,X)
+           nLy = self.network.nLayers;
+           layer = self.network.layer;
+           h = self.hypothesisfunction(X,layer{1}.W,layer{1}.b);
             [g,~] = self.actFCN(h,2);
-            for i = 2:self.nLayers-1
+            for i = 2:nLy-1
                 h = self.hypothesisfunction(g,layer{i}.W,layer{i}.b);
                 [g,~] = self.actFCN(h,i+1);
             end
@@ -71,31 +45,32 @@ classdef Propagator < handle
 
     methods (Access = private)
 
-        % ARREGLAR AUTODIFF
-       function [J,grad] = f_adiff(self,layer)         
-           self.forwardprop(layer);
-           J = self.cost;
-           grad = dlgradient(J,layer);
-       end
-
-       function forwardprop(self,layer)
-           self.computeLossFunction(layer);
-           self.computeRegularizationTerm(layer);
+       function forwardprop(self,layer,Xb,Yb)
+           self.computeLoss(layer,Xb,Yb);
+           self.computeRegularization(layer);
            c = self.loss;
            r = self.regularization;
            l = self.lambda;
            self.cost = c + l*r;
        end
 
-       function computeLossFunction(self,layer)          
-           self.computeActivationFCN(self.Xb,layer);
-           a = self.a_fcn;
-           [J,~] = self.costFunction(self.Yb,a);
+       function computeLoss(self,layer,Xb,Yb)          
+           nLy = self.network.nLayers;
+           a = cell(nLy,1);
+           a{1} = Xb;
+           for i = 2:nLy
+               g_prev = a{i-1};
+               h = self.hypothesisfunction(g_prev,layer{i-1}.W,layer{i-1}.b);
+               [g,~] = self.actFCN(h,i);
+               a{i} = g;
+           end
+           self.a_fcn = a;
+           [J,~] = self.costFunction(Yb,a);
            self.loss = J;
        end
 
-       function computeRegularizationTerm(self,layer)
-           nLy = self.nLayers;
+       function computeRegularization(self,layer)
+           nLy = self.network.nLayers;
            s = 0;
            nth = 0;
            for i = 2:nLy
@@ -106,39 +81,26 @@ classdef Propagator < handle
            self.regularization = r;
        end
 
-       function computeActivationFCN(self,x,layer)
-           nLy = self.nLayers;
-           a = cell(nLy,1);
-           a{1} = x;
-           for i = 2:nLy
-               g_prev = a{i-1};
-               h = self.hypothesisfunction(g_prev,layer{i-1}.W,layer{i-1}.b);
-               [g,~] = self.actFCN(h,i);
-               a{i} = g;
-           end
-           self.a_fcn = a;
-       end  
-
-       function grad = backprop(self,layer)
+       function grad = backprop(self,layer,Yb)
            a = self.a_fcn;
-           y = self.Yb;
-           nPl = self.neuronsPerLayer;
-           nLy = self.nLayers;
-           m = length(y);
-           delta = cell(nLy,1);
+           nPl = self.network.neuronsPerLayer;
+           nLy = self.network.nLayers;
+           m = length(Yb);
+           deltag = cell(nLy,1);
            gradW = cell(nLy-1,1);
            gradb = cell(nLy-1,1);
            for k = nLy:-1:2    
                [~,a_der] = self.actFCN(a{k},k); 
                if k == nLy
-                   [~,t1] = self.costFunction(y,a);  
-                   delta{k} = t1.*a_der;
+                   [~,t1] = self.costFunction(Yb,a);  
+                   deltag{k} = t1.*a_der;
                else                    
-                   delta{k} = (layer{k}.W*delta{k+1}')'.*a_der;
+                   deltag{k} = (layer{k}.W*deltag{k+1}')'.*a_der;
                end
-               gradW{k-1} = (1/m)*(a{k-1}'*delta{k}) + self.lambda*layer{k-1}.W;
-               gradb{k-1} = (1/m)*(sum(delta{k},1)) + self.lambda*layer{k-1}.b;
+               gradW{k-1} = (1/m)*(a{k-1}'*deltag{k}) + self.lambda*layer{k-1}.W;
+               gradb{k-1} = (1/m)*(sum(deltag{k},1)) + self.lambda*layer{k-1}.b;
            end
+           self.delta = deltag;
            grad = [];
            for i = 2:nLy
                aux = [reshape(gradW{i-1},[1,nPl(i-1)*nPl(i)]),gradb{i-1}];
@@ -147,8 +109,7 @@ classdef Propagator < handle
        end
 
        function [J,gc] = costFunction(self,y,a)
-            type = self.costFCNtype;
-            J = 0;
+            type = self.network.Costtype;
             yp = a{end};
             switch type
                 case '-loglikelihood-softmax'
@@ -171,10 +132,11 @@ classdef Propagator < handle
 
        function [g,g_der] = actFCN(self,z,k)
             % OJO amb com estic usant les derivades
-            if k == self.nLayers
-                type = 'sigmoid';
+            nLy = self.network.nLayers;
+            if k == nLy
+                type = self.network.OUtype;
             else
-                type = self.activationFCNtype;
+                type = self.network.HUtype;
             end
             switch type 
                 case 'sigmoid'

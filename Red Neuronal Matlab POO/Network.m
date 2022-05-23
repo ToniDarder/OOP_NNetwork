@@ -1,15 +1,18 @@
 classdef Network < handle
  
     properties (GetAccess = public, SetAccess = private)
+       data
        thetavec
        neuronsPerLayer
        nLayers
        lambda
-       data
+       Costtype
+       HUtype
+       OUtype
        cost
-       gradient
        regularization
        loss
+       gradient
     end
 
     properties (Dependent)
@@ -30,59 +33,44 @@ classdef Network < handle
 
        function computeInitialTheta(self)
            nPL    = self.neuronsPerLayer;
-           nLayer = self.nLayers;
-           nW     = 0;
-           nb     = 0;
-           W      = [];
-           b      = [];
-           for i = 2:nLayer
-                if i ~= nLayer
-                    auxb = zeros([1,nPL(i)]) + 0.1;
+           th     = [];
+           for i = 2:self.nLayers
+                if i ~= self.nLayers
+                    b = zeros([1,nPL(i)]) + 0.1;
                 else
-                    auxb = zeros([1,nPL(i)]) + 1/nPL(i);
+                    b = zeros([1,nPL(i)]) + 1/nPL(i);
                 end
                 u = (6/(nPL(i-1)+nPL(i)))^0.5;
-                auxW = (unifrnd(-u,u,[1,nPL(i-1)*nPL(i)]));
-                b = [b, auxb];
-                W = [W, auxW];
+                W = (unifrnd(-u,u,[1,nPL(i-1)*nPL(i)]));
+                th = [th,W,b];
            end      
-           self.thetavec = [W,b];
+           self.thetavec = th;
        end
 
        function h = getOutput(self,X)
-            h = self.propagator.compute_last_H(X,self.layer);
+            h = self.propagator.compute_last_H(X);
        end
        
        function computeCost(self,theta,Xb,Yb)
            self.thetavec = theta;
            [J,grad] = self.propagator.propagate(self.layer,Xb,Yb); 
-           self.computeLoss();
-           self.computeRegularization();
+           self.loss = self.propagator.loss;
+           l = self.lambda;
+           self.regularization = l*self.propagator.regularization;
            self.cost = J; 
            self.gradient = grad;
        end 
 
-       function computeLoss(self)
-           l = self.propagator.loss;
-           self.loss = l;
-        end
-
-        function computeRegularization(self)
-            r = self.propagator.regularization;
-            l = self.lambda;
-            self.regularization = r*l;
-        end
-
-        function plotBoundary(self,type) 
-           self.plotter.plotBoundary(self.layer,type);
+       function plotBoundary(self,type) 
+           self.plotter.plotBoundary(type);
        end
 
        function plotConections(self)
-           self.plotter.plotNetworkStatus(self.layer);
+           self.plotter.plotNetworkStatus();
        end
 
        function plotConfusionMatrix(self)
-           self.plotter.drawConfusionMat(self.layer);
+           self.plotter.drawConfusionMat();
        end
 
        function updateHyperparameter(self,h)
@@ -102,9 +90,12 @@ classdef Network < handle
            self.nLayers = length(s.Net_Structure);
            self.data = s.data;
            self.lambda = s.lambda;
-           s.self = self;
+           self.Costtype = s.costFunction;
+           self.HUtype = s.activationFunction;
+           self.OUtype = s.outputFunction;
+           s.net = self;
            self.propagator = Propagator(s);
-           self.plotter = Plotter(s,self.propagator);
+           self.plotter = Plotter(self);
        end  
    end   
 

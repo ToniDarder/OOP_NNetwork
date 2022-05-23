@@ -1,31 +1,27 @@
 classdef Plotter < handle
-    properties (Access = public)
-
-    end
 
     properties (Access = private)
         data
         neuronsPerLayer
-        propagator
+        network
     end
 
     methods (Access = public)
 
-        function self = Plotter(init,P)
+        function self = Plotter(init)
             self.data = init.data;
-            self.neuronsPerLayer = init.Net_Structure;
-            self.propagator = P;
+            self.neuronsPerLayer = init.neuronsPerLayer;
+            self.network = init;
         end
 
-        function plotBoundary(self,layer,type) 
+        function plotBoundary(self,type) 
            X = self.data.Xtrain;
            nF = size(X,2);
            nPL = self.neuronsPerLayer;
            n_pts = 100;
            graphzoom = 1;
            x = createMesh();
-           
-           h = self.computeHeights(x(:,1),x(:,2),n_pts,nF,layer);
+           h = self.computeHeights(x(:,1),x(:,2),n_pts,nF);
            figure(10)
            clf(10)     
            colorsc = ['r','g','b','c','m','y','k'];
@@ -71,7 +67,7 @@ classdef Plotter < handle
            end  
            hold on
            title('Contour 0')
-           self.data.plotdata();
+           self.data.plotdata(1,2);
            hold off
 
            function x = createMesh()
@@ -82,6 +78,7 @@ classdef Plotter < handle
                x2 = linspace(min(X(:,2))-extra_f2,max(X(:,2))+extra_f2,n_pts)';
                x = [x1,x2];
            end
+
            function mymap = colormaps()
                colors = [1,0.3,0.3;   % r
                          0.3,1,0.3;   % g
@@ -104,10 +101,11 @@ classdef Plotter < handle
            end
         end
 
-        function plotNetworkStatus(self,layer)      
-            NPL = self.neuronsPerLayer;
-            nLy = length(NPL);
-            neurons = cell(max(NPL),nLy);
+        function plotNetworkStatus(self)   
+            layer = self.network.layer;
+            nPL = self.neuronsPerLayer;
+            nLy = length(nPL);
+            neurons = cell(max(nPL),nLy);
             for i = 1:nLy-1
                 if i == 1
                     maxTH = max(layer{i}.W(:));
@@ -121,12 +119,12 @@ classdef Plotter < handle
             y_sep = 30;
             figure
             xlim([-20 nLy*x_sep-10])
-            ylim([-20 max(NPL)*y_sep+10])
+            ylim([-20 max(nPL)*y_sep+10])
             set(gca,'XTick',[], 'YTick', [])
             box on
             hold on
             for i = 1:nLy
-                for j = 1:NPL(i)
+                for j = 1:nPL(i)
                     if i == 1
                         color = [1 0 0];
                     elseif i == nLy
@@ -147,9 +145,9 @@ classdef Plotter < handle
             b = [linspace(0,0.75,50)',linspace(0,0.75,50)',linspace(1,1,50)'];
             rgb = [b;r];
             for i = 1:nLy-1
-                for j = 1:NPL(i)
+                for j = 1:nPL(i)
                     neuronb = neurons{i,j};
-                    for k = 1:NPL(i+1)
+                    for k = 1:nPL(i+1)
                         neuronf = neurons{i+1,k};
                         wth = abs(layer{i}.W(j,k)/maxTH);
                         lw = 3*wth;
@@ -166,16 +164,16 @@ classdef Plotter < handle
             hold off
         end
 
-        function drawConfusionMat(self,layer)
+        function drawConfusionMat(self)
             targets = self.data.Ytest;
             x = self.data.Xtest;
-            outputs = self.propagator.compute_last_H(x,layer);
+            outputs = self.network.getOutput(x);
             plotconfusion(targets',outputs')
         end
     end
 
     methods (Access = private)
-        function h_3D = computeHeights(self,x1,x2,n_pts,nF,layer)
+        function h_3D = computeHeights(self,x1,x2,n_pts,nF)
            nPL = self.neuronsPerLayer;
            X_test = zeros(n_pts,nF,n_pts);
            h = zeros(n_pts*nPL(end),n_pts);
@@ -184,7 +182,7 @@ classdef Plotter < handle
                x2_aux = ones(n_pts,1)*x2(i);
                xdata_test = [x1 , x2_aux];
                X_test(:,:,i) = xdata_test;
-               h(:,i) = reshape(self.propagator.compute_last_H(X_test(:,:,i),layer),[n_pts*nPL(end),1]);
+               h(:,i) = reshape(self.network.getOutput(X_test(:,:,i)),[n_pts*nPL(end),1]);
            end
            for j = 1:nPL(end)
                h_3D(:,:,j) = h((j-1)*n_pts+1:j*n_pts,:);

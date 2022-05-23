@@ -1,0 +1,20 @@
+classdef RMSProp < GD
+
+    properties (Access = private)
+       alpha
+       v
+    end
+
+    methods(Access = public)
+
+        function self = RMSProp(s)
+            self@GD(s); 
+            self.alpha = s.alpha;
+            self.v     = 0;
+        end
+
+        function [x,grad] = step(self,x,e,grad,F,Xb,Yb)
+            r = rho*r +      
+        end     
+    end 
+end

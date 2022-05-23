@@ -4,14 +4,9 @@ clear;
 close all;
 
 %% Initialization of hyperparameters
-% Data
 pol_deg         = 1;
 testratio       = 20;  
-
-% Network
 lambda          = 0.;
-
-%Trainer
 learningRate    = 0.01;
 alpha           = 0.5;
 
@@ -24,18 +19,18 @@ end
 file = datasets(input('Choose: '));
 
 %% Create the data object
-%data1 = Data(file,testratio,pol_deg);
-data1 = load('data1BATCHANALY.mat').data1;
+data1 = Data(file,testratio,pol_deg);
+%data1 = load('data1BATCHANALY.mat').data1;
 
 %% Create Network Object
-hiddenlayers = [500,300];
+hiddenlayers = [4,8];
 net_structure           = [data1.nFeatures,hiddenlayers,data1.nLabels];
 n.lambda                = lambda;
 n.Net_Structure         = net_structure;
 n.data                  = data1;
-n.prop                  = 'backprop';
 n.costFunction          = '-loglikelihood-softmax';
-n.activationFunction    = 'ReLU';
+n.activationFunction    = 'tanh';
+n.outputFunction        = 'softmax';
 network = Network(n);
 
 %% Create a trainer object
@@ -43,13 +38,14 @@ t               = n;
 t.network       = network;
 t.lr            = learningRate;
 t.alpha         = alpha;
-t.type          = 'SGD';
+t.type          = 'Nesterov';
 t.batchsize     = 200;
 t.optTolerance  = 1*10^-6;
 t.maxevals      = 20000;
-t.maxepochs     = 100;
+t.maxepochs     = 1000;
+t.earlyStop     = 200;
 t.learningType  = 'static';
-t.isDisplayed   = true;
+t.isDisplayed   = false;
 t.nPlot         = 40;
 optimizer       = Trainer.create(t);
 
